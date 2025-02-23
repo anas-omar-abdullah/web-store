@@ -1,0 +1,28 @@
+:root{
+    --primary-color: #3ca2fa;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors;
+  }
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/90;
+  }
+  .btn-danger {
+    @apply bg-red-500 text-white hover:bg-red-600;
+  }
+  .input {
+    @apply rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary;
+  }
+  .table-header {
+    @apply px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider;
+  }
+  .table-cell {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+  }
+}
