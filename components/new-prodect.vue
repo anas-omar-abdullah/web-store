@@ -14,7 +14,7 @@
     @touchend="onDragEnd"
   >
     <!-- الحاوية الداخلية للمنتجات -->
-    <div class="flex" :style="sliderStyle">
+    <div class="flex go-next" :style="sliderStyle">
       <div
         v-for="product in products"
         :key="product.id"
@@ -22,16 +22,21 @@
         :style="{ flex: `0 0 calc(100% / ${itemsPerView})` }"
       >
         <div class="bg-white p-4 shadow rounded cursor-pointer">
-          <img
-            draggable="false"
-            :src="product.image"
-            :alt="product.title"
-            class="w-full h-auto object-cover"
-          />
-          <h2 class="mb-8 mt-2 text-center text-xl">{{ product.title }}</h2>
+          <NuxtLink :to="`product/${product.id}`" draggable="false">
+            <img
+              draggable="false"
+              :src="product.image"
+              :alt="product.title"
+              class="w-full h-auto object-cover"
+            />
+          </NuxtLink>
+          <h2 class="mb-8 mt-2 text-center text-xl select-none">
+            {{ product.title }}
+          </h2>
         </div>
       </div>
     </div>
+    <div class="h-[20px] w-100%"></div>
 
     <!-- سهم التنقل لليسار -->
     <button
@@ -51,8 +56,8 @@
 
     <!-- نقاط التنقل (الدوائر) أسفل الـ Slider -->
     <div
-      class="absolute left-1/2 transform -translate-x-1/2 flex space-x-2"
-      style="bottom: 10px"
+      class="absolute left-1/2 transform -translate-x-1/2 flex space-x-2 bottom--3"
+      style="bottom: 0"
     >
       <span
         v-for="(dot, index) in totalDots"
@@ -126,7 +131,6 @@ const products = ref([
     image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9",
   },
 
-
   // يمكن إضافة المزيد من المنتجات هنا
 ]);
 
@@ -191,20 +195,32 @@ const sliderStyle = computed(() => {
   const shift = currentIndex.value * productWidth - dragOffset.value;
   return {
     transform: `translateX(-${shift}px)`,
-    transition: isDragging.value ? "none" : "transform 0.5s ease-out",
+    transition: isDragging.value ? "none" : "transform  0.3s ease-in-out",
   };
 });
 
+const isTransitioning = ref(false);
 // دوال التنقل بدون الالتفاف (loop)
 const prev = () => {
+  if (isTransitioning.value) return;
   if (currentIndex.value > 0) {
+    isTransitioning.value = true;
     currentIndex.value--;
+    setTimeout(() => {
+      isTransitioning.value = false;
+    }, 300);
   }
 };
 
 const next = () => {
+  console.log(isTransitioning.value);
+  if (isTransitioning.value) return;
   if (currentIndex.value < totalDots.value - 1) {
+    isTransitioning.value = true;
     currentIndex.value++;
+    setTimeout(() => {
+      isTransitioning.value = false;
+    }, 300);
   }
 };
 
@@ -245,7 +261,8 @@ const onDragEnd = () => {
 };
 </script>
 <style scoped>
-.all{
-  direction:ltr;
+.all {
+  direction: ltr;
 }
 </style>
+-->

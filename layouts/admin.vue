@@ -1,119 +1,160 @@
 <template>
-  <div class="min-h-screen bg-gray-100">
-    <nav class="bg-white shadow-sm">
-      <div class="small-s-all max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-20">
-          <img class="img-s mt-4 h-16 w-auto" src="/logo.png" alt="Logo" />
-          <div class="flex">
-            <div class="flex-shrink-0 flex items-center"></div>
-            <div class="small-s ml-6 flex space-x-8 space-x-reverse">
-              <NuxtLink
-                to="/admin"
-                class="small-s-link border-transparent text-gray-500 hover:border-primary hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-              >
-                المنتجات
-              </NuxtLink>
-              <NuxtLink
-                to="/admin/categories"
-                class="small-s-link border-transparent text-gray-500 hover:border-primary hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-              >
-                التصنيفات
-              </NuxtLink>
-              <NuxtLink
-                to="/admin/add-admin"
-                class="small-s-link border-transparent text-gray-500 hover:border-primary hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-              >
-                المشرفين
-              </NuxtLink>
-              <NuxtLink
-                to="/admin/orders"
-                class="small-s-link border-transparent text-gray-500 hover:border-primary hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-              >
-                الطلبات
-              </NuxtLink>
-            </div>
-          </div>
-          <div class="flex items-center">
-            <button
-              @click="showNotifications = !showNotifications"
-              class="p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary relative"
-            >
-              <Bell class="h-6 w-6" />
-              <span
-                v-if="unreadNotifications > 0"
-                class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"
-              ></span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Notifications Panel -->
-      <div
-        v-if="showNotifications"
-        class="not-nav absolute right-0 mt-2 w-80 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5"
-      >
-        <div class="px-4 py-2 border-b border-gray-100">
-          <h3 class="text-lg font-medium">الإشعارات</h3>
-        </div>
-        <div class="max-h-96 overflow-y-auto">
-          <div
-            v-for="notification in notifications"
-            :key="notification.id"
-            class="px-4 py-2 hover:bg-gray-50"
+  <nav class="bg-white shadow-md">
+    <div
+      class="content container mx-auto flex items-center justify-between p-2"
+    >
+      <!-- logo -->
+      <NuxtLink to="/">
+        <img class="w-40" src="/logo.png" alt="logo" />
+      </NuxtLink>
+      <div class="hidden md:flex flex-1">
+        <!-- link for big scareen -->
+        <div class=" link-des md:flex flex-1 ">
+          <NuxtLink
+            v-for="(link, index) in myLink"
+            :key="index"
+            :to="link.url"
+            class="block px-2 py-2 mr-4 hover:text-primary"
+            active-class="active-link"
           >
-            <p class="text-sm text-gray-700">{{ notification.message }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ notification.time }}</p>
-          </div>
+            {{ link.name }}
+          </NuxtLink>
         </div>
       </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      <slot />
-    </main>
-  </div>
+      <div class="flex items-center space-x-4 ">
+        <div class="ml-4 flex items-center">
+          <button @click="logout" class="ml-4 flex items-center logout text-white">
+            تسجيل الخروج
+            <LogOut class="w-5 h-5 pr-1" />
+          </button>
+          <button
+            @click="showNotifications = !showNotifications"
+            class="p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary relative"
+          >
+            <Bell class="h-6 w-6" />
+            <span
+              v-if="unreadNotifications > 0"
+              class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"
+            ></span>
+          </button>
+        </div>
+        <!-- زر القائمة للجوال -->
+        <button @click="toggleMenu" class="md:hidden">
+          <LucideMenu class="w-6 h-6 text-gray-700" />
+        </button>
+      </div>
+    </div>
+    <!-- قائمة الصفحات للجوال -->
+    <div v-if="isMenuOpen" class="nav-link md:hidden bg-gray-100">
+      <NuxtLink
+        v-for="(link, index) in myLink"
+        :key="index"
+        :to="link.url"
+        class="block px-4 py-2 text-gray-700 hover:bg-gray-200"
+        active-class="active-link"
+      >
+        {{ link.name }}
+      </NuxtLink>
+    </div>
+    <!-- Notifications Panel -->
+    <div
+      v-if="showNotifications"
+      class="not-nav absolute right-0 mt-2 w-80 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5"
+    >
+      <div class="px-4 py-2 border-b border-gray-100">
+        <h3 class="text-lg font-medium">الإشعارات</h3>
+      </div>
+      <div class="max-h-96 overflow-y-auto">
+        <div
+          v-for="notification in notifications"
+          :key="notification.id"
+          class="px-4 py-2 hover:bg-gray-50"
+        >
+          <p class="text-sm text-gray-700">{{ notification.message }}</p>
+          <p class="text-xs text-gray-500 mt-1">{{ notification.time }}</p>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <slot />
+  </main>
 </template>
 
 <script setup>
-import { Bell } from "lucide-vue-next";
+import { Bell, LucideMenu, LogOut } from "lucide-vue-next";
 import { ref, onMounted } from "vue";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client";
+import { useAuthStore } from "@/stores/auth";
 
 const showNotifications = ref(false);
 const unreadNotifications = ref(0);
 const notifications = ref([]);
-const socket = ref(null);
+const isSubAdmin = ref(JSON.parse(localStorage.getItem("_user"))?.role);
 
-onMounted(() => {
-  socket.value = io("ws://your-backend-url");
+const isMenuOpen = ref(false);
+const toggleMenu = () => {
+  isMenuOpen.value = !isMenuOpen.value;
+};
 
-  socket.value.on("notification", (notification) => {
-    notifications.value.unshift(notification);
-    unreadNotifications.value++;
-  });
-});
+const myLink = [
+  { name: "المنتجات", url: "/admin" },
+  { name: "التصنيفات", url: "/admin/categories" },
+  { name: "المشرفين", url: "/admin/add-admin" },
+  { name: "الطلبات", url: "/admin/orders" },
+];
+const logout = () => {
+  const authStore = useAuthStore();
+  authStore.logout();
+};
+// const socket = ref(null);
+
+// onMounted(() => {
+//   socket.value = io("ws://your-backend-url");
+
+//   socket.value.on("notification", (notification) => {
+//     notifications.value.unshift(notification);
+//     unreadNotifications.value++;
+//   });
+// });
 </script>
 <style scoped>
 .not-nav {
   right: calc(100% - 340px);
 }
-@media (max-width: 570px) {
-  .small-s {
-    margin-left: 1px;
-    margin-right: 1px;
-  }
-  .small-s-all{
-    padding-right: 0;
-  }
-  .small-s-link {
-    margin-right: 1px !important;
-  } 
+.text-primary {
+  color: var(--primary-color);
 }
-@media (max-width: 470px) {
-  .small-s-all{
-    padding-left: 0;
-  }
+.bg-primary {
+  background-color: var(--primary-color);
 }
-
+.link-des {
+  padding-right: 5%;
+}
+.active-link {
+  color: var(--primary-color);
+  position: relative;
+}
+.active-link::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--primary-color);
+}
+.logout {
+  background-color: var(--primary-color);
+  width: 115px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: small;
+  justify-content: center;
+}
+.logout:hover {
+  background-color: white;
+  color: var(--primary-color);
+  transition: 0.2s;
+}
 </style>

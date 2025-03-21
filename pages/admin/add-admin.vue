@@ -1,5 +1,10 @@
 <template>
-  <div>
+  <loading overlay v-if="showLoading" />
+  <h1 v-if="errorMess" class="w-full text-red-500 text-center">{{ errorMess }}</h1>
+  <h1 v-else-if="subAdmins.length === 0" class="text-primary text-center">
+    لا يوجد عناصر لعرضها
+  </h1>
+  <div v-else>
     <div class="mb-6 flex justify-between items-center">
       <h1 class="text-2xl font-semibold text-gray-900">المشرفين</h1>
       <button @click="showAddModal = true" class="btn btn-primary">
@@ -8,7 +13,7 @@
     </div>
 
     <!-- Sub-Admins Table -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="table-sm bg-white shadow rounded-lg overflow-hidden">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -63,8 +68,12 @@
                 v-model="adminForm.name"
                 type="text"
                 class="all-border-input input mt-1 block w-full"
-                required
+                :class="{ '!border-red-500': errors.name }"
+                @input="clearError('name')"
               />
+              <p v-if="errors.name" class="text-red-500 text-sm mt-1 pl-2">
+                {{ errors.name }}
+              </p>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700"
@@ -85,8 +94,12 @@
                 v-model="adminForm.password"
                 type="password"
                 class="all-border-input input mt-1 block w-full"
-                required
+                :class="{ '!border-red-500': errors.password }"
+                @input="clearError('password')"
               />
+              <p v-if="errors.password" class="text-red-500 text-sm mt-1 pl-2">
+                {{ errors.password }}
+              </p>
             </div>
           </div>
           <div class="mt-6 flex justify-end space-x-3 space-x-reverse">
@@ -101,6 +114,10 @@
               {{ editingAdmin ? "حفظ التغييرات" : "إضافة المشرف" }}
             </button>
           </div>
+          <loading v-if="loadingForm" />
+          <div v-if="errorApi" class="mt-4 text-red-600 text-center">
+            {{ errorApi.message }}
+          </div>
         </form>
       </div>
     </div>
@@ -108,12 +125,17 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onBeforeMount } from "vue";
 import { Pencil, Trash2 } from "lucide-vue-next";
+import { useAuthStore } from "~/stores/auth";
+
+useHead({
+  title: "لوحة التحكم بالمشرفين",
+});
 
 definePageMeta({
-    layout:"admin"
-})
+  layout: "admin",
+});
 
 const subAdmins = ref([]);
 const showAddModal = ref(false);
@@ -122,6 +144,30 @@ const adminForm = ref({
   name: "",
   email: "",
   password: "",
+});
+const errors = ref({
+  name: "",
+  password: "",
+});
+const errorMess = ref("");
+const showLoading = ref(false);
+const loadingForm = ref(false);
+const errorApi = ref("");
+const showErrorInput = ref(false);
+const authStore = useAuthStore();
+
+onBeforeMount(async () => {
+  showLoading.value = true;
+  try {
+    subAdmins.value = await authStore.showProduct("api/users/admins");
+    if (!authStore.response.ok) {
+          errorMess.value = "فشل جلب المشرفين الرجاء المحاولة لاحقا";
+    }
+  } catch (error) {
+    errorMess.value = "فشل جلب المشرفين الرجاء المحاولة لاحقا";
+  } finally {
+    showLoading.value = false;
+  }
 });
 
 function formatDate(date) {
@@ -141,36 +187,102 @@ function editAdmin(admin) {
 function deleteAdmin(admin) {
   if (confirm("هل أنت متأكد من حذف هذا المشرف؟")) {
     // TODO: Call API to delete admin
-    subAdmins.value = subAdmins.value.filter((a) => a.id !== admin.id);
+    try {
+      showLoading.value = true;
+      authStore.deletThing(admin, `api/users/admins/admin/${admin.id}`);
+      subAdmins.value = subAdmins.value.filter((a) => a.id !== admin.id);
+      if (!authStore.response.ok) {
+        setTimeout(() => {
+          errorMess.value = "فشل حذف المشرف الرجاء المحاولة لاحقا";
+        }, 2000);
+      }
+    } catch (error) {
+      setTimeout(() => {
+          errorMess.value = "فشل حذف المشرف الرجاء المحاولة لاحقا";
+        }, 2000);
+    } finally {
+      showLoading.value = false;
+      errorMess.value = "";
+    }
   }
 }
-
-function saveAdmin() {
-  if (editingAdmin.value) {
-    // TODO: Call API to update admin
-    const index = subAdmins.value.findIndex(
-      (a) => a.id === editingAdmin.value.id
-    );
-    subAdmins.value[index] = {
-      ...editingAdmin.value,
-      name: adminForm.value.name,
-      email: adminForm.value.email,
-    };
-  } else {
-    // TODO: Call API to create admin
-    subAdmins.value.push({
-      id: Date.now(),
-      name: adminForm.value.name,
-      email: adminForm.value.email,
-      createdAt: new Date().toISOString(),
-    });
+// دالة لتنظيف الأخطاء عند البدء بالكتابة
+const clearError = (field) => {
+  if (errors.value[field] && showErrorInput.value) {
+    errors.value[field] = "";
+    validateForm();
   }
-  showAddModal.value = false;
+};
+const validateForm = () => {
+  let isValid = true;
+  if (adminForm.value.name.trim() === "") {
+    errors.value.name = "هذا الحقل مطلوب";
+    isValid = false;
+  }
+  if (adminForm.value.password.length < 6) {
+    errors.value.password = "هذا الحقل مطلوب ويجب أن يكون اكبر من 5 عناصر";
+    isValid = false;
+  }
+  return isValid;
+};
+
+async function saveAdmin() {
+  showErrorInput.value = true;
+  if (!validateForm()) return;
+  try {
+    if (editingAdmin.value) {
+      loadingForm.value = true;
+      // TODO: Call API to update admin
+      const result = await authStore.updateProduct(
+        adminForm.value,
+        "api/users/user",
+      );
+      const index = subAdmins.value.findIndex(
+        (a) => a.id === editingAdmin.value.id
+      );
+      subAdmins.value[index] = {
+        ...editingAdmin.value,
+        name: adminForm.value.name,
+        email: adminForm.value.email,
+      };
+      if(!authStore.response.ok){
+      setTimeout(() => {
+          errorApi.value = "فشل تعديل المشرف الرجاء المحاولة لاحقا";
+        }, 2000);
+      }
+    } else {
+      // TODO: Call API to create admin
+      const result = await authStore.addProduct(
+        adminForm.value,
+        "api/users/admins/admin",
+      );
+      subAdmins.value.push({
+        name: adminForm.value.name,
+        email: adminForm.value.email,
+        createdAt: new Date().toISOString(),
+      });
+      if(!authStore.response.ok){
+      setTimeout(() => {
+          errorApi.value = "فشل أضافة المشرف الرجاء المحاولة لاحقا";
+        }, 2000);
+      }
+    }
+    showAddModal.value = false;
+    resetForm();
+  } catch (error) {
+    errorApi.value = "falid:" + error;
+  } finally {
+    loadingForm.value = false;
+    errorApi.value = "";
+  }
+}
+function resetForm() {
   editingAdmin.value = null;
   adminForm.value = {
     name: "",
     email: "",
     password: "",
   };
+  showErrorInput.value = false;
 }
 </script>

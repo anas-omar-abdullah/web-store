@@ -1,27 +1,31 @@
 <template>
-  <div>
-    <div class="mb-6">
-      <h1 class="mt-6 text-2xl font-semibold text-gray-900">الطلبات</h1>
+  <loading overlay v-if="showLoading" />
+  <div class="mb-6">
+    <h1 class="mt-6 text-2xl font-semibold text-gray-900">الطلبات</h1>
 
-      <!-- Statistics -->
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h3 class="text-lg font-medium text-gray-900">إجمالي المبيعات</h3>
-          <p class="mt-2 text-3xl font-semibold text-primary">
-            {{ totalSales }} ر.س
-          </p>
-        </div>
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h3 class="text-lg font-medium text-gray-900">عدد الطلبات</h3>
-          <p class="mt-2 text-3xl font-semibold text-primary">
-            {{ totalOrders }}
-          </p>
-        </div>
+    <!-- Statistics -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-medium text-gray-900">إجمالي المبيعات</h3>
+        <p class="mt-2 text-3xl font-semibold text-primary">
+          {{ totalSales }} $
+        </p>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-medium text-gray-900">عدد الطلبات</h3>
+        <p class="mt-2 text-3xl font-semibold text-primary">
+          {{ totalOrders }}
+        </p>
       </div>
     </div>
-
+  </div>
+  <h1 v-if="errorMess" class="w-full text-red-500 text-center">{{ errorMess }}</h1>
+  <h1 v-else-if="orders.length === 0" class="text-primary text-center">
+    لا يوجد عناصر لعرضها
+  </h1>
+  <div v-else>
     <!-- Orders Table -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="table-sm bg-white shadow rounded-lg overflow-hidden">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -34,10 +38,10 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="order in displayedOrders" :key="order.id">
+          <tr v-for="order in orders" :key="order.id">
             <td class="table-cell">#{{ order.id }}</td>
             <td class="table-cell">{{ order.customerName }}</td>
-            <td class="table-cell">{{ order.total }} ر.س</td>
+            <td class="table-cell">{{ order.total }} $</td>
             <td class="table-cell">{{ formatDate(order.createdAt) }}</td>
             <td class="table-cell">
               <span
@@ -59,30 +63,6 @@
         </tbody>
       </table>
     </div>
-
-    <!-- Pagination -->
-    <div class="mt-4 flex justify-center">
-      <nav
-        class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-        aria-label="Pagination"
-      >
-        <button
-          @click="currentPage--"
-          :disabled="currentPage === 1"
-          class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-        >
-          السابق
-        </button>
-        <button
-          @click="currentPage++"
-          :disabled="currentPage >= totalPages"
-          class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-        >
-          التالي
-        </button>
-      </nav>
-    </div>
-
     <!-- Update Status Modal -->
     <div
       v-if="showStatusModal"
@@ -124,34 +104,28 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onBeforeMount } from "vue";
 import { RefreshCw } from "lucide-vue-next";
 
+useHead({
+  title: "عرض تفاصيل الطلبات",
+});
+
 definePageMeta({
-    layout:"admin"
-})
+  layout: "admin",
+});
 
 const orders = ref([]);
-const currentPage = ref(1);
-const itemsPerPage = 10;
 const showStatusModal = ref(false);
 const selectedOrder = ref(null);
 const newStatus = ref("");
-
+const errorMess = ref("");
+const showLoading = ref(false);
 const totalSales = computed(() => {
   return orders.value.reduce((sum, order) => sum + order.total, 0).toFixed(2);
 });
 
 const totalOrders = computed(() => orders.value.length);
-
-const totalPages = computed(() =>
-  Math.ceil(orders.value.length / itemsPerPage)
-);
-const displayedOrders = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
-  return orders.value.slice(start, end);
-});
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("ar-SA");
@@ -186,18 +160,49 @@ function updateOrderStatus(order) {
 }
 
 function saveOrderStatus() {
+
   if (selectedOrder.value) {
-    // TODO: Call API to update order status
-    const index = orders.value.findIndex(
-      (o) => o.id === selectedOrder.value.id
-    );
-    orders.value[index] = {
-      ...selectedOrder.value,
-      status: newStatus.value,
-    };
+    showLoading.value = true;
+    try {
+      // TODO: Call API to update order status
+      const index = orders.value.findIndex(
+        (o) => o.id === selectedOrder.value.id
+      );
+      orders.value[index] = {
+        ...selectedOrder.value,
+        status: newStatus.value,
+      };
+      if (!authStore.response.ok) {
+        setTimeout(() => {
+          errorMess.value = "فشل تعديل حالة الطلب الرجاء المحاولة لاحقا";
+        }, 2000);
+      }
+    } catch (error) {
+      setTimeout(() => {
+        errorMess.value = "فشل تعديل حالة الطلب الرجاء المحاولة لاحقا";
+      }, 2000);
+    } finally {
+      errorMess.value = "";
+      showLoading.value = false;
+    }
   }
   showStatusModal.value = false;
   selectedOrder.value = null;
   newStatus.value = "";
 }
+// load order 
+onBeforeMount(async () => {
+  showLoading.value = true;
+  try {
+    products.value = await authStore.showProduct("api/products");
+    if(!authStore.response.ok){
+      errorMess.value = "فشل جلب الطلبات الرجاء المحاولة لاحقا: "
+    }
+  } catch (error) {
+    errorMess.value = "فشل جلب الطلبات الرجاء المحاولة لاحقا "
+  } finally {
+    showLoading.value = false;
+  }
+});
+
 </script>

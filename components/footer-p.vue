@@ -17,30 +17,30 @@
     </div>
     <!-- أيقونات التواصل الاجتماعي -->
     <div class="flex space-x-4 mb-4 md:mb-0 m-4">
-      <a
-      href="https://www.facebook.com"
+      <NuxtLink
+      to="https://www.facebook.com"
       target="_blank"
       rel="noopener noreferrer"
-          class="m-2 hover:text-[#3ca2fa]"
+          class="m-2 ml-4 hover:text-[#3ca2fa]"
         >
           <Facebook size="20" />
-        </a>
-        <a
-          href="https://www.instagram.com"
+        </NuxtLink>
+        <NuxtLink
+          to="https://www.instagram.com"
           target="_blank"
           rel="noopener noreferrer"
           class="m-2 hover:text-[#3ca2fa]"
         >
           <Instagram size="20" />
-        </a>
-        <a
-          href="https://www.twitter.com"
+        </NuxtLink>
+        <NuxtLink
+          to="https://www.twitter.com"
           target="_blank"
           rel="noopener noreferrer"
           class="m-2 hover:text-[#3ca2fa]"
         >
           <Twitter size="20" />
-        </a>
+        </NuxtLink>
       </div>
 
       <p class="text-sm m-4">&copy; 2025 جميع الحقوق محفوظة</p>

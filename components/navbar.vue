@@ -24,7 +24,7 @@
             v-for="(item, index) in menuItems"
             :key="index"
             :to="item.link"
-            class="block px-2 py-2"
+            class="block px-2 py-2 hover:text-primary mr-2"
             active-class="active-link"
           >
             {{ item.name }}
@@ -78,7 +78,7 @@
                       الكمية: {{ item.quantity }}
                     </p>
                   </div>
-                  <div class="pr-8 text-sm font-semibold">{{ item.price }} ريال</div>
+                  <div class="px-2 text-sm font-semibold">{{ item.price }} $</div>
                 </div>
               </div>
               <!-- زر الانتقال للدفع -->
@@ -100,7 +100,6 @@
         </button>
       </div>
     </div>
-
     <!-- حقل البحث للجوال -->
     <div v-if="isSearchOpen" class="p-4 md:hidden">
       <input
@@ -172,7 +171,7 @@ onUnmounted(() => {
 const cartItems = ref([
   {
     id: 1,
-    name: "منتج 1",
+    name: "منتج",
     quantity: 2,
     price: 50,
     image: "https://via.placeholder.com/48",
@@ -254,10 +253,7 @@ const cartItems = ref([
 .fade-leave-to {
   opacity: 0;
 }
-.cart-scroll-container {
-  direction: ltr;
-}
 .see{
-  direction: ltr;
+  direction: rtl;
 }
 </style>

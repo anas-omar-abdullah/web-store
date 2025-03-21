@@ -2,5 +2,10 @@
     <download-app />
     <photo-home />
     <categories />
-    <new-prodect />
+    <slider-product />
 </template>
+<script setup>
+useHead({
+  title: 'الرئيسية'
+})
+</script>

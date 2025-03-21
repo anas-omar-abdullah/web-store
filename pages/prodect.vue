@@ -18,31 +18,39 @@
     </div>
 
     <!-- شبكة عرض المنتجات -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+    >
       <div
         v-for="product in filteredProducts"
         :key="product.id"
         class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
       >
-        <img
-          :src="product.image"
-          :alt="product.name"
-          class="w-full h-48 object-cover"
-        />
-        <div class="p-4">
-          <h3 class="text-lg font-semibold mb-2">{{ product.name }}</h3>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-gray-600">{{ product.category }}</span>
-            <span class="text-color font-bold">{{ product.price }} ر.س</span>
+        <NuxtLink :to="`/product/${product.id}`">
+          <img
+            :src="product.image"
+            :alt="product.name"
+            class="w-full h-48 object-cover"
+          />
+          <div class="p-4">
+            <h3 class="text-lg font-semibold mb-2">{{ product.name }}</h3>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-600">{{ product.category }}</span>
+              <span class="text-color font-bold">{{ product.price }} $</span>
+            </div>
+            <button class="w-full border-var py-2 rounded-md transition-colors">
+              إضافة للسلة
+              <ShoppingCart class="inline-block w-4 h-4 ml-2" />
+            </button>
+            <NuxtLink :to="`buying/${product.id}`"
+              ><button
+                class="pay mt-4 w-full bg-color text-white py-2 rounded-md"
+              >
+                الذهاب للشراء
+              </button></NuxtLink
+            >
           </div>
-          <button class="w-full border-var py-2 rounded-md transition-colors">
-            إضافة للسلة
-            <ShoppingCart class="inline-block w-4 h-4 ml-2" />
-          </button>
-          <button class="pay mt-4 w-full bg-color text-white py-2 rounded-md">
-            الذهاب للشراء
-          </button>
-        </div>
+        </NuxtLink>
       </div>
     </div>
   </div>
@@ -51,7 +59,11 @@
 <script setup>
 import { ref, computed } from "vue";
 import { ShoppingCart } from "lucide-vue-next";
-import { useState } from '#imports';
+import { useState } from "#imports";
+
+useHead({
+  title: 'كافة المنتجات'
+})
 
 // بيانات المنتجات (يمكنك استبدالها ببياناتك الفعلية)
 const products = ref([
@@ -79,10 +91,10 @@ const products = ref([
 ]);
 
 // تصنيفات المنتجات المتاحة (يجب أن تتطابق مع التصنيفات في صفحة التصنيفات)
-const categories = ["العناية بالبشرة", "مستحضرات التجميل", "العناية بالشعر"]
+const categories = ["العناية بالبشرة", "مستحضرات التجميل", "العناية بالشعر"];
 
 // استخدام الحالة المشتركة لنفس المفتاح المستخدم في صفحة التصنيفات
-const selectedCategory = useState('selectedCategory', () => '');
+const selectedCategory = useState("selectedCategory", () => "");
 
 // تصفية المنتجات بناءً على التصنيف المختار
 const filteredProducts = computed(() => {
