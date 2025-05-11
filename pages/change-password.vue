@@ -14,7 +14,7 @@
                 placeholder="أدخل كلمة السر الجديدة"
                 class="w-full rounded-md p-2 pl-10 all-border-input"
                 :class="{ ' !border-red-500': newPasswordError }"
-                @input="clearError('newPassword')"
+                @input="clearError()"
               />
               <!-- أيقونة القفل -->
               <LockIcon class="w-5 h-5 text-gray-400 absolute left-3 top-1" />
@@ -30,7 +30,7 @@
                 v-model="confirmPassword"
                 type="password"
                 id="confirmPassword"
-                @input="clearError('confirmPassword')"
+                @input="clearError()"
                 placeholder="أعد إدخال كلمة السر الجديدة"
                 class="w-full rounded-md p-2 pl-10 all-border-input"
                 :class="{ ' !border-red-500': confirmPasswordError }"
@@ -53,8 +53,6 @@
   <script setup>
   import { ref } from 'vue'
   import { LockIcon } from 'lucide-vue-next'
-  // استدعِ axios إذا كنت تحتاج للتعامل مع API
-  // import axios from 'axios'
   
   const newPassword = ref('')
   const confirmPassword = ref('')
@@ -85,34 +83,14 @@ const clearError = () => {
 
   const handleChangePassword = async () => {
     showErrorInput.value = false;
-    // newPasswordError.value = ''
-    // confirmPasswordError.value = ''
-    // successMessage.value = ''
     if(!valdateForm()) return;
-
-    // التحقق من تعبئة الحقول
-    // if (!newPassword.value) {
-    //   newPasswordError.value = 'يرجى إدخال كلمة السر الجديدة'
-    //   return
-    // }
-    // if (!confirmPassword.value) {
-    //   confirmPasswordError.value = 'يرجى تأكيد كلمة السر'
-    //   return
-    // }
-    // if (newPassword.value !== confirmPassword.value) {
-    //   confirmPasswordError.value = 'كلمتا السر غير متطابقتين'
-    //   return
-    // }
-  
     try {
-      // مثال على استدعاء API لتغيير كلمة السر
-      // await axios.post('/api/change-password', { password: newPassword.value })
       successMessage.value = 'تم تغيير كلمة السر بنجاح';
       resetForm();
     } catch (error) {
       newPasswordError.value = 'حدث خطأ أثناء تغيير كلمة السر، يرجى المحاولة مرة أخرى'
     }finally{
-
+      
     }
   }
   function valdateForm() {

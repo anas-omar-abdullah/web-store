@@ -1,8 +1,9 @@
 <template>
-  <nav class="bg-white shadow-md">
-    <div
-      class="content container mx-auto flex items-center justify-between p-2"
-    >
+  <nav
+    class="fixed z-[999] left-0 right-0 bg-white shadow-md"
+    :class="{ 'top-[44px]': isAdVisible, 'top-0': !isAdVisible }"
+  >
+    <div class="content container mx-auto flex items-center justify-between">
       <!-- logo -->
       <NuxtLink to="/" class="text-xl font-bold text-primary">
         <img class="w-40" src="/logo.png" alt="logo" />
@@ -11,12 +12,51 @@
       <!-- حقل البحث في الشاشات الكبيرة -->
       <div class="hidden md:flex flex-1">
         <div class="relative w-2/4">
-          <LucideSearch class="absolute left-3 top-1/2 -translate-y-1/2" />
+          <button @click="serachProduct">
+            <LucideSearch class="absolute left-3 top-1/2 -translate-y-1/2" />
+          </button>
           <input
+            v-model="searchText"
             type="text"
             placeholder="بحث..."
             class="input-search w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
           />
+          <transition name="fade">
+            <div
+              v-if="isSerOpen"
+              class="absolute left-full ml-2 mt-2 w-80 bg-white border border-gray-200 shadow-lg rounded-lg p-4 z-10"
+            >
+              <h3 class="text-lg font-semibold mb-2">نتائج البحث</h3>
+              <div class="max-h-64 overflow-y-auto">
+                <div v-if="isLoading" class="p-4 text-center">
+                  جاري البحث...
+                </div>
+                <div v-else-if="errorMessage" class="p-4 text-red-500">
+                  {{ errorMessage }}
+                </div>
+                <div v-else-if="results.length === 0" class="p-4">
+                  لا توجد نتائج
+                </div>
+                <div v-else class="results"></div>
+                <div
+                  v-for="product in results"
+                  :key="product.id"
+                  class="flex items-center border-b border-gray-200 py-2"
+                >
+                  <img
+                    :src="product.image"
+                    :alt="product.name"
+                    loading="lazy"
+                    class="w-12 h-12 object-cover rounded mr-3"
+                  />
+                  <div class="flex-1">
+                    <h3 class="font-medium">{{ product.name }}</h3>
+                    <p class="text-sm text-gray-600">{{ product.price }} $</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </transition>
         </div>
         <!-- link for big scareen -->
         <div class="link-des md:flex flex-1">
@@ -39,7 +79,7 @@
 
         <!-- أيقونة سلة الشراء -->
         <!-- زر سلة الشراء مع القائمة المنبثقة -->
-        <div  ref="cartContainer" class="relative">
+        <div ref="cartContainer" class="relative">
           <button @click="toggleCart" class="relative">
             <LucideShoppingCart class="w-6 h-6 text-gray-700" />
             <!-- عرض عدد العناصر في السلة -->
@@ -78,14 +118,24 @@
                       الكمية: {{ item.quantity }}
                     </p>
                   </div>
-                  <div class="px-2 text-sm font-semibold">{{ item.price }} $</div>
+                  <div class="px-2 text-sm font-semibold">
+                    {{ item.price }} $
+                  </div>
                 </div>
               </div>
               <!-- زر الانتقال للدفع -->
               <div class="mt-4">
                 <NuxtLink
-                  to="/checkout"
-                  class="block text-center bg-primary text-white py-2 rounded hover:bg-primary-dark"
+                  to="/menu"
+                  class="block text-center border-var py-2 rounded-md transition-colors"
+                >
+                  الانتقال للسلة
+                </NuxtLink>
+              </div>
+              <div class="mt-4">
+                <NuxtLink
+                  to="/buying"
+                  class="block text-center bg-color text-white py-2 rounded-md pay"
                 >
                   الانتقال للشراء
                 </NuxtLink>
@@ -110,7 +160,11 @@
     </div>
 
     <!-- قائمة الصفحات للجوال -->
-    <div v-if="isMenuOpen" class="nav-link md:hidden bg-gray-100">
+    <div
+      v-if="isMenuOpen"
+      ref="popupRef"
+      class="nav-link md:hidden bg-gray-100"
+    >
       <NuxtLink
         v-for="(item, index) in menuItems"
         :key="index"
@@ -125,11 +179,18 @@
 </template>
 
 <script setup>
-import { ref ,onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { LucideSearch, LucideShoppingCart, LucideMenu } from "lucide-vue-next";
+import { onClickOutside, useDebounce } from "@vueuse/core";
+import { useRouter } from "vue-router";
+import { useAdvertisement } from '~/composables/useAdvertisement';
+
+const router = useRouter();
+const { isAdVisible } = useAdvertisement();
 
 const isMenuOpen = ref(false);
 const isSearchOpen = ref(false);
+const popupRef = ref(null);
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
@@ -138,6 +199,15 @@ const toggleMenu = () => {
 const toggleSearch = () => {
   isSearchOpen.value = !isSearchOpen.value;
 };
+// إغلاق القائمة عند الضغط خارجها باستخدام VueUse
+onClickOutside(popupRef, () => {
+  isMenuOpen.value = false;
+});
+
+// إغلاق القائمة عند التنقل بين الصفحات
+router.afterEach(() => {
+  isMenuOpen.value = false;
+});
 
 const menuItems = [
   { name: "الرئيسية", link: "/" },
@@ -150,23 +220,22 @@ const toggleCart = () => {
 };
 
 // مرجع لحاوية السلة
-const cartContainer = ref(null)
+const cartContainer = ref(null);
 
 // دالة لإغلاق السلة عند النقر خارجها
 const handleClickOutside = (event) => {
   if (cartContainer.value && !cartContainer.value.contains(event.target)) {
-    isCartOpen.value = false
+    isCartOpen.value = false;
   }
-}
+};
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
+  document.addEventListener("click", handleClickOutside);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
-
+  document.removeEventListener("click", handleClickOutside);
+});
 // مثال لعناصر السلة
 const cartItems = ref([
   {
@@ -176,43 +245,58 @@ const cartItems = ref([
     price: 50,
     image: "https://via.placeholder.com/48",
   },
-  {
-    id: 2,
-    name: "منتج 2",
-    quantity: 1,
-    price: 100,
-    image: "https://via.placeholder.com/48",
-  },
-  {
-    id: 3,
-    name: "منتج 3",
-    quantity: 3,
-    price: 30,
-    image: "https://via.placeholder.com/48",
-  },
-  {
-    id: 1,
-    name: "منتج 1",
-    quantity: 2,
-    price: 50,
-    image: "https://via.placeholder.com/48",
-  },
-  {
-    id: 2,
-    name: "منتج 2",
-    quantity: 1,
-    price: 100,
-    image: "https://via.placeholder.com/48",
-  },
-  {
-    id: 3,
-    name: "منتج 3",
-    quantity: 3,
-    price: 30,
-    image: "https://via.placeholder.com/48",
-  },
-
 ]);
+// result search
+const isSerOpen = ref(false);
+const toggleSer = () => {
+  isSerOpen.value = !isSerOpen.value;
+};
+
+const results = ref([]);
+const searchText = ref("");
+const errorMess = ref("");
+const showLoading = ref(false);
+const serachProduct = async () => {
+  if (!searchText.value.trim()) {
+    errorMess.value = "الرجاء إدخال كلمة بحث";
+    isSearchOpen.value = false;
+    setTimeout(() => {
+      errorMess.value = "";
+    }, 2000);
+    return;
+  }
+  try {
+    errorMess.value = "";
+    showLoading.value = true;
+    isSearchOpen.value = true;
+    const { data } = await $fetch(
+      "https://muaazaltahan-001-site1.dtempurl.com/api/products",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    results.value = data;
+  } catch (error) {
+    errorMess.value = "حدث خطأ أثناء البحث";
+    setTimeout(() => {
+      errorMess.value = "";
+    }, 1000);
+  } finally {
+    showLoading.value = false;
+  }
+};
+
+const debouncedSearch = useDebounce(serachProduct, 3000);
+watch(searchText, () => {
+  debouncedSearch();
+});
+
+onClickOutside(document.querySelector('.relative'), () => {
+  isSearchOpen.value = false;
+});
 </script>
 
 <style scoped>
@@ -253,7 +337,30 @@ const cartItems = ref([
 .fade-leave-to {
   opacity: 0;
 }
-.see{
+.see {
   direction: rtl;
+}
+.text-color {
+  color: var(--primary-color);
+}
+.bg-color {
+  background: var(--primary-color);
+}
+.border-var {
+  border: 2px solid var(--primary-color);
+}
+.border-var:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+.pay:hover {
+  background-color: #0f8fff;
+}
+/* search  */
+.product-card {
+  border: 1px solid #ddd;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 8px;
 }
 </style>

@@ -1,0 +1,10 @@
+for api
+أول شي ليش عم تخزين ال التصنيف محل الوصف او مالك عامل مكان للوصف ؟؟
+and u have problem with category and describtion
+
+
+
+
+for me 
+i have prob;em with token with finish time i stay login but i dont can call with api 
+i have problem with get response in api and showing in website<<category item admin/index

@@ -1,6 +1,6 @@
 <template>
   <loading overlay v-if="showLoading" />
-  <div class="all mb-4">
+  <div class="all mb-4 mt-[84px]">
     <section class="m-h mt-8 container mx-auto px-4">
       <div
         class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8 margin-bt"
@@ -177,8 +177,8 @@ const validateForm = () => {
     errors.value.address = "هذا الحقل مطلوب";
     isValid = false;
   }
-  if (form.value.phone.length !== 10) {
-    errors.value.phone = "عدد الأرقام يجب أن يساوي 10";
+  if (form.value.phone.length.trim() === "") {
+    errors.value.phone = "هذا الحقل مطلوب";
     isValid = false;
   }
 

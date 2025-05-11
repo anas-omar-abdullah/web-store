@@ -1,5 +1,9 @@
 <template>
-  <div class="all container mx-auto px-4 py-8">
+  <loading overlay v-if="showLoading"></loading>
+  <h1 v-if="errorMess" class="mt-8 w-full text-red-500 text-center">
+    {{ errorMess }}
+  </h1>
+  <div v-else class="all mt-[80px] container mx-auto px-4 py-8">
     <!-- قسم التصفية -->
     <div class="mb-8 bg-white p-4 rounded-lg shadow">
       <h2 class="text-xl font-semibold mb-4 text-color">تصفية المنتجات</h2>
@@ -11,14 +15,16 @@
             :key="category"
             :value="category"
           >
-            {{ category }}
+            {{ category.name }}
           </option>
         </select>
       </div>
     </div>
-
-    <!-- شبكة عرض المنتجات -->
+    <h2 v-if="products?.length === 0" class="mt-8 text-primary text-center">
+      لا يوجد منتجات لعرضها
+    </h2>
     <div
+      v-else
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
     >
       <div
@@ -28,17 +34,45 @@
       >
         <NuxtLink :to="`/product/${product.id}`">
           <img
-            :src="product.image"
+            :src="product.imageUrl"
             :alt="product.name"
             class="w-full h-48 object-cover"
           />
+        </NuxtLink>
           <div class="p-4">
             <h3 class="text-lg font-semibold mb-2">{{ product.name }}</h3>
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-gray-600">{{ product.category }}</span>
+              <span class="text-sm text-gray-600">
+                <span v-for="(category, index) in product.categories" :key="index">
+                  {{ category }}{{ index < product.categories.length - 1 ? '، ' : '' }}
+                </span>
+              </span>
               <span class="text-color font-bold">{{ product.price }} $</span>
             </div>
-            <button class="w-full border-var py-2 rounded-md transition-colors">
+            <div
+              class="flex items-center justify-evenly mb-2 border border-black"
+            >
+              <span
+                @click="increment(product)"
+                :disabled="product.count >= 25"
+                class="text-2xl w-4 text-center text-color cursor-pointer"
+                :class="{ 'opacity-50 !cursor-not-allowed': product.count >= product.quantity }"
+                >+</span
+              >
+              <span class="text-xl text-center">{{ product.count }}</span>
+              <span
+                @click="decrement(product)"
+                :disabled="product.count <= 1"
+                class="text-2xl w-4 text-center text-red-500 cursor-pointer"
+                :class="{ 'opacity-50 !cursor-not-allowed': product.count <= 1 }"
+                >-</span
+              >
+            </div>
+
+            <button
+              @click="goMenu(product)"
+              class="w-full border-var py-2 rounded-md transition-colors"
+            >
               إضافة للسلة
               <ShoppingCart class="inline-block w-4 h-4 ml-2" />
             </button>
@@ -50,51 +84,40 @@
               </button></NuxtLink
             >
           </div>
-        </NuxtLink>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onBeforeMount } from "vue";
 import { ShoppingCart } from "lucide-vue-next";
 import { useState } from "#imports";
+import { useCounter } from "@vueuse/core";
+import { useRoute } from "vue-router";
+import Swal from 'sweetalert2';
 
 useHead({
-  title: 'كافة المنتجات'
-})
+  title: "كافة المنتجات",
+});
+const products = ref([]);
+const categories = ref([]);
+const showLoading = ref(false);
+const errorMess = ref("");
 
-// بيانات المنتجات (يمكنك استبدالها ببياناتك الفعلية)
-const products = ref([
-  {
-    id: 1,
-    name: "كريم مرطب للوجه",
-    category: "العناية بالبشرة",
-    price: 129,
-    image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500",
-  },
-  {
-    id: 2,
-    name: "مسكرة طويلة الأمد",
-    category: "مستحضرات التجميل",
-    price: 89,
-    image: "https://images.unsplash.com/photo-1631730359585-38a4935cbec4?w=500",
-  },
-  {
-    id: 3,
-    name: "شامبو طبيعي",
-    category: "العناية بالشعر",
-    price: 59,
-    image: "https://images.unsplash.com/photo-1626784215021-2e39ccf971cd?w=500",
-  },
-]);
+const increment = (product) => {
+  if (product.count < product.quantity) {
+    product.count = (product.count || 0) + 1;
+  }
+};
+const decrement = (product) => {
+  if (product.count > 1) {
+    product.count = product.count - 1;
+  }
+};
 
-// تصنيفات المنتجات المتاحة (يجب أن تتطابق مع التصنيفات في صفحة التصنيفات)
-const categories = ["العناية بالبشرة", "مستحضرات التجميل", "العناية بالشعر"];
-
-// استخدام الحالة المشتركة لنفس المفتاح المستخدم في صفحة التصنيفات
-const selectedCategory = useState("selectedCategory", () => "");
+const route = useRoute();
+const selectedCategory = useState("selectedCategory", () => route.query.category || "");
 
 // تصفية المنتجات بناءً على التصنيف المختار
 const filteredProducts = computed(() => {
@@ -103,6 +126,84 @@ const filteredProducts = computed(() => {
     (product) => product.category === selectedCategory.value
   );
 });
+
+onBeforeMount(async () => {
+  try {
+    showLoading.value = true;
+    const { data } = await useFetch(
+      "https://muaazaltahan-001-site1.dtempurl.com/api/Categories",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (data.value) {
+      categories.value = data.value;
+    }
+  } catch (error) {
+    errorMess.value = "فشل جلب التصنيفات الرجاء المحاولة لاحقا";
+  } finally {
+    showLoading.value = false;
+  }
+  try {
+    showLoading.value = true;
+    const { data } = await useFetch(
+      "https://muaazaltahan-001-site1.dtempurl.com/api/products",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (data.value) {
+      products.value = data.value.map(product => ({
+        ...product,
+        count: 1
+      }));
+    }
+  } catch (error) {
+    errorMess.value = "فشل جلب المنتجات الرجاء المحاولة لاحقا";
+  } finally {
+    showLoading.value = false;
+  }
+});
+
+function goMenu(product) {
+  const stored = localStorage.getItem("products");
+  let products = stored ? JSON.parse(stored) : [];
+  const productIndex = products.findIndex(item => item.id === product.id);
+  
+  if (productIndex !== -1) {
+    products[productIndex].count = (products[productIndex].count || 0) + (product.count || 1);
+  } else {
+    products.push({
+      ...product,
+      count: product.count || 1
+    });
+  }
+  localStorage.setItem("products", JSON.stringify(products));
+
+  // إظهار الإشعار
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+      toast.addEventListener('mouseenter', Swal.stopTimer)
+      toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+  });
+
+  Toast.fire({
+    icon: 'success',
+    title: 'تمت إضافة المنتج إلى السلة بنجاح'
+  });
+}
 </script>
 
 <style scoped>

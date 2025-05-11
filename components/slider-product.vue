@@ -2,10 +2,17 @@
   <h2 class="my-8 text-3xl font-bold text-center mb-8 text-[#3ca2fa]">
     جديدنا من المنتجات
   </h2>
-  <div class="relative mb-12">
+  <loading v-if="showLoading" />
+  <h3 v-else-if="errorMess" class="w-full text-red-500 text-center">
+    {{ errorMess }}
+  </h3>
+  <div v-else-if="products.length === 0" class="text-primary text-center">
+    لا توجد منتجات متاحة حالياً
+  </div>
+  <div v-else class="relative mb-12">
     <!-- مكون Swiper مع إعدادات الاستجابة والتخصيص -->
     <Swiper
-      :modules=[Pagination]
+      :modules="[Pagination]"
       :space-between="20"
       :loop="true"
       :pagination="{
@@ -21,8 +28,13 @@
     >
       <SwiperSlide v-for="(product, index) in products" :key="index">
         <div class="p-4 bg-white rounded shadow">
-          <img :src="product.image" alt="صورة المنتج" class="w-full rounded" />
-          <h3 class="mt-2 text-lg text-center">{{ product.title }}</h3>
+          <NuxtLink :to="`/product/${product.id}`"
+            ><img
+              :src="product.imageUrl"
+              alt="صورة المنتج"
+              class="w-full h-[200px] object-cover rounded"
+          /></NuxtLink>
+          <h3 class="mt-2 text-lg text-center">{{ product.name }}</h3>
         </div>
       </SwiperSlide>
     </Swiper>
@@ -32,52 +44,44 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import loading from "/components/loading.vue";
+import { ref, onBeforeMount } from "vue";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import { Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
+const errorMess = ref("");
 const modules = [Pagination];
-const products = ref([
-  {
-    id: 1,
-    title: "منتج 1",
-    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9",
-  },
-  {
-    id: 2,
-    title: "منتج 2",
-    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9",
-  },
-  {
-    id: 3,
-    title: "منتج 3",
-    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9",
-  },
-  {
-    id: 4,
-    title: "منتج 4",
-    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9",
-  },
-  {
-    id: 5,
-    title: "منتج 5",
-    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9",
-  },
-  {
-    id: 6,
-    title: "منتج 6",
-    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9",
-  },
-  {
-    id: 7,
-    title: "منتج 7",
-    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9",
-  },
-  {
-    id: 8,
-    title: "منتج 8",
-    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9",
-  },
-]);
+const showLoading = ref(false);
+const products = ref([]);
+onBeforeMount(async () => {
+  try {
+    showLoading.value = true;
+    const { data } = await useFetch(
+      "https://muaazaltahan-001-site1.dtempurl.com/api/products",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        onResponse({ response }) {
+          if (!response.ok) {
+            throw new Error(`خطأ في الاستجابة: ${response.status}`);
+          }
+        },
+        onRequestError({ error }) {
+          throw new Error(`خطأ في الطلب: ${error.message}`);
+        },
+      }
+    );
+    if (data.value) {
+      products.value = data.value;
+    }
+    
+  } catch (error) {
+    errorMess.value = "فشل جلب أحدث المنتجات الرجاء المحاولة لاحقا";
+  } finally {
+    showLoading.value = false;
+  }
+});
 </script>

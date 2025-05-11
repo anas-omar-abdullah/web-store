@@ -34,7 +34,7 @@ onBeforeMount(() => {
 * {
   scrollbar-width: thin;
   scrollbar-color: #3ca2fa #f1f1f1;
-  font-family: "Almarai", serif;
+  font-family: "Almarai";
 }
 /* لتغيير لون التحديد في كل الموقع */
 ::selection {

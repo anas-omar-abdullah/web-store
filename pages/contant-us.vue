@@ -1,16 +1,15 @@
 <template>
-  <loading overlay v-if="showLoading" />
-  <section class="mt-8 container mx-auto px-4">
+  <section class="mt-[90px] container mx-auto px-4">
     <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8">
-      <h1 class="text-3xl font-bold mb-6 text-[#3ca2fa] text-center">
+      <h1 class="text-3xl font-bold mb-2 text-[#3ca2fa] text-center">
         الدعم واتصل بنا
       </h1>
-      <p class="text-gray-600 mb-8 text-center">
+      <p class="text-gray-600 mb-8 text-sm text-center">
         نرحب بمشاركتكم واستفساراتكم، يرجى ملء النموذج أدناه وسنتواصل معكم
         قريباً.
       </p>
       <form @submit.prevent="submitForm">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 ">
           <!-- حقل الاسم -->
           <div>
             <label class="block text-gray-700 mb-2" for="name">الاسم</label>
@@ -80,9 +79,14 @@
           <button
             type="submit"
             class="bg-[#3ca2fa] hover:bg-[#349ed1] text-white font-bold py-2 px-6 rounded-md transition duration-300"
+            :disabled="showLoading"
+            :class="{ 'opacity-50 cursor-not-allowed': showLoading }"
           >
             إرسال الرسالة
           </button>
+          <p v-if="goodMess" class="mt-2 text-center text-green-600">{{ goodMess }}</p>
+          <p v-if="errorMess" class="mt-2 text-center text-red-600">{{ errorMess }}</p>
+          <loading v-if="showLoading" />
         </div>
       </form>
     </div>
@@ -105,6 +109,8 @@ const form = ref({
 const errors = ref({ name: "", subject: "", message: "" });
 const showLoading = ref(false);
 const showErrorInput = ref(false);
+const goodMess = ref("");
+const errorMess = ref("");
 // دالة لتنظيف الأخطاء عند البدء بالكتابة
 const clearError = (field) => {
   if (errors.value[field] && showErrorInput.value) {
@@ -135,15 +141,24 @@ async function submitForm() {
   if(!validateForm()) return;
   showLoading.value = true;
   try {
-    const response = await $fetch("....");
+    const response = await $fetch("https://muaazaltahan-001-site1.dtempurl.com/", {
+      method: "POST",
+      body: form,
+    });
+    goodMess.value = "تم الارسال بنجاح ";
+    setTimeout( () => {
+      goodMess.value = "";
+    },1500)
   } catch (error) {
-    console.log(error);
+    errorMess.value = "فشل الارسال الرجاء المحاولة لاحقا ";
+    setTimeout( () => {
+      errorMess.value = "";
+    },1500)
   } finally {
     showLoading.value = false;
   }
   // هنا يمكنك إضافة الكود اللازم لإرسال البيانات إلى الخادم (API)
   console.log("تم إرسال البيانات:", form);
-  alert("تم إرسال رسالتك بنجاح!");
   // إعادة تعيين الحقول بعد الإرسال
   form.name = "";
   form.email = "";

@@ -1,8 +1,7 @@
 <template>
   <loading overlay v-if="showLoading" />
-  <h1 v-if="errorMess" class="w-full text-red-500 text-center">{{ errorMess }}</h1>
-  <h1 v-else-if="subAdmins.length === 0" class="text-primary text-center">
-    لا يوجد عناصر لعرضها
+  <h1 v-if="errorMess" class="w-full text-red-500 text-center">
+    {{ errorMess }}
   </h1>
   <div v-else>
     <div class="mb-6 flex justify-between items-center">
@@ -11,14 +10,18 @@
         إضافة مشرف
       </button>
     </div>
+    <h1 v-if="subAdmins.length === 0" class="text-primary text-center">
+      لا يوجد عناصر لعرضها
+    </h1>
 
     <!-- Sub-Admins Table -->
-    <div class="table-sm bg-white shadow rounded-lg overflow-hidden">
+    <div v-else class="table-sm bg-white shadow rounded-lg overflow-hidden">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
             <th scope="col" class="table-header">الاسم</th>
             <th scope="col" class="table-header">البريد الإلكتروني</th>
+            <th scope="col" class="table-header">رقم الجوال</th>
             <th scope="col" class="table-header">تاريخ الإضافة</th>
             <th scope="col" class="table-header">الإجراءات</th>
           </tr>
@@ -27,6 +30,7 @@
           <tr v-for="admin in subAdmins" :key="admin.id">
             <td class="table-cell">{{ admin.name }}</td>
             <td class="table-cell">{{ admin.email }}</td>
+            <td class="table-cell">{{ admin.phoneNumber }}</td>
             <td class="table-cell">{{ formatDate(admin.createdAt) }}</td>
             <td class="table-cell">
               <div class="flex space-x-2 space-x-reverse">
@@ -52,7 +56,7 @@
     <!-- Add/Edit Sub-Admin Modal -->
     <div
       v-if="showAddModal"
-      class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
+      class="fixed inset-0 z-[100] bg-gray-500 bg-opacity-75 flex items-center justify-center"
     >
       <div class="bg-white rounded-lg p-6 max-w-md w-full">
         <h2 class="text-xl font-semibold mb-4">
@@ -101,16 +105,67 @@
                 {{ errors.password }}
               </p>
             </div>
+            <!-- here input phonenumber -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700"
+                >رقم الهاتف</label
+              >
+              <div class="flex-number">
+                <!-- زر اختيار رمز الدولة -->
+                <div ref="dropdownRef" class="relative flex-grow-0">
+                  <button
+                    type="button"
+                    @click="toggleCountryCodeDropdown"
+                    class="w-full inline-flex items-center px-2 py-2 all-border-input rounded-l-md"
+                  >
+                    {{ selectedCountryCode }}
+                    <ChevronDown class="ml-2 h-4 w-4" />
+                  </button>
+                  <!-- قائمة رموز الدول -->
+                  <div
+                    v-if="showCountryCodeDropdown"
+                    class="absolute z-10 mt-1 w-48 bg-white shadow-lg rounded-md border border-gray-200"
+                  >
+                    <div
+                      v-for="country in countries"
+                      :key="country.code"
+                      @click="selectCountryCode(country)"
+                      class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      {{ country.name }} ({{ country.code }})
+                    </div>
+                  </div>
+                </div>
+                <!-- حقل إدخال الرقم -->
+                <input
+                  v-model="adminForm.phoneNumber"
+                  type="number"
+                  class="w-full text-po m-2 border rounded-r-md all-border-input"
+                  placeholder="أدخل رقم الهاتف"
+                  :class="{ '!border-red-500': errors.phone }"
+                  @input="clearError('phone')"
+                />
+              </div>
+              <p v-if="errors.phone" class="text-red-500 text-sm mt-1 pl-2">
+                {{ errors.phone }}
+              </p>
+            </div>
+            <!-- here end -->
           </div>
           <div class="mt-6 flex justify-end space-x-3 space-x-reverse">
             <button
               type="button"
-              @click="showAddModal = false"
+              @click="bothJob"
               class="btn bg-gray-100 text-gray-700 hover:bg-gray-200"
             >
               إلغاء
             </button>
-            <button type="submit" class="btn btn-primary">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              :disabled="loadingForm"
+              :class="{ 'opacity-50 cursor-not-allowed': loadingForm }"
+            >
               {{ editingAdmin ? "حفظ التغييرات" : "إضافة المشرف" }}
             </button>
           </div>
@@ -126,8 +181,10 @@
 
 <script setup>
 import { ref, onBeforeMount } from "vue";
-import { Pencil, Trash2 } from "lucide-vue-next";
+import { Pencil, Trash2, ChevronDown } from "lucide-vue-next";
 import { useAuthStore } from "~/stores/auth";
+import { onClickOutside } from "@vueuse/core";
+import Swal from "sweetalert2";
 
 useHead({
   title: "لوحة التحكم بالمشرفين",
@@ -144,10 +201,12 @@ const adminForm = ref({
   name: "",
   email: "",
   password: "",
+  phoneNumber: "",
 });
 const errors = ref({
   name: "",
   password: "",
+  phone: "",
 });
 const errorMess = ref("");
 const showLoading = ref(false);
@@ -156,17 +215,41 @@ const errorApi = ref("");
 const showErrorInput = ref(false);
 const authStore = useAuthStore();
 
+const countries = ref([
+  { code: "+964", name: "العراق" },
+  { code: "+963", name: "سوريا" },
+  // يمكنك إضافة المزيد من الدول
+]);
+const selectedCountryCode = ref("+964"); // رمز الدولة الافتراضي
+const showCountryCodeDropdown = ref(false);
+const dropdownRef = ref(null);
+
+const toggleCountryCodeDropdown = () => {
+  showCountryCodeDropdown.value = !showCountryCodeDropdown.value;
+};
+
+const selectCountryCode = (country) => {
+  selectedCountryCode.value = country.code;
+  showCountryCodeDropdown.value = false;
+};
+
+// إغلاق القائمة عند النقر خارجها
+onClickOutside(dropdownRef, () => {
+  showCountryCodeDropdown.value = false;
+});
+
 onBeforeMount(async () => {
   showLoading.value = true;
   try {
     subAdmins.value = await authStore.showProduct("api/users/admins");
     if (!authStore.response.ok) {
-          errorMess.value = "فشل جلب المشرفين الرجاء المحاولة لاحقا";
+      errorMess.value = "فشل جلب المشرفين الرجاء المحاولة لاحقا";
     }
   } catch (error) {
     errorMess.value = "فشل جلب المشرفين الرجاء المحاولة لاحقا";
   } finally {
     showLoading.value = false;
+    errorMess.value = "";
   }
 });
 
@@ -177,33 +260,48 @@ function formatDate(date) {
 function editAdmin(admin) {
   editingAdmin.value = admin;
   adminForm.value = {
-    name: admin.name,
-    email: admin.email,
-    password: "",
+    ...admin,
   };
   showAddModal.value = true;
 }
-
-function deleteAdmin(admin) {
-  if (confirm("هل أنت متأكد من حذف هذا المشرف؟")) {
-    // TODO: Call API to delete admin
-    try {
+async function deleteAdmin(admin) {
+  try {
+    const result = await Swal.fire({
+      title: "هل أنت متأكد؟",
+      text: "لن تتمكن من استرجاع هذا المشرف!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "var(--primary-color)",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "نعم، احذف!",
+      cancelButtonText: "إلغاء",
+    });
+    if (result.isConfirmed) {
       showLoading.value = true;
-      authStore.deletThing(admin, `api/users/admins/admin/${admin.id}`);
+      const deleteResult = await authStore.deletThing(
+        admin,
+        `api/users/admins/admin/${admin.id}`
+      );
       subAdmins.value = subAdmins.value.filter((a) => a.id !== admin.id);
-      if (!authStore.response.ok) {
-        setTimeout(() => {
-          errorMess.value = "فشل حذف المشرف الرجاء المحاولة لاحقا";
-        }, 2000);
-      }
-    } catch (error) {
-      setTimeout(() => {
-          errorMess.value = "فشل حذف المشرف الرجاء المحاولة لاحقا";
-        }, 2000);
-    } finally {
-      showLoading.value = false;
-      errorMess.value = "";
+
+      await Swal.fire({
+        title: "تم الحذف!",
+        text: "تم حذف المشرف بنجاح.",
+        icon: "success",
+        size: "small",
+        showConfirmButton: false,
+        timer: 600,
+        timerProgressBar: true,
+        width: "300px",
+      });
     }
+  } catch (error) {
+    errorMess.value = "فشل حذف المشرف الرجاء المحاولة لاحقا";
+    setTimeout(() => {
+      errorMess.value = "";
+    }, 2000);
+  } finally {
+    showLoading.value = false;
   }
 }
 // دالة لتنظيف الأخطاء عند البدء بالكتابة
@@ -230,12 +328,15 @@ async function saveAdmin() {
   showErrorInput.value = true;
   if (!validateForm()) return;
   try {
+    loadingForm.value = true;
+    console.log(editingAdmin.value);
     if (editingAdmin.value) {
-      loadingForm.value = true;
+      console.log("fddsfsd");
+      console.log(editingAdmin.value);
       // TODO: Call API to update admin
       const result = await authStore.updateProduct(
         adminForm.value,
-        "api/users/user",
+        "api/users/user"
       );
       const index = subAdmins.value.findIndex(
         (a) => a.id === editingAdmin.value.id
@@ -244,36 +345,31 @@ async function saveAdmin() {
         ...editingAdmin.value,
         name: adminForm.value.name,
         email: adminForm.value.email,
+        phoneNumber: adminForm.value.phoneNumber,
       };
-      if(!authStore.response.ok){
-      setTimeout(() => {
-          errorApi.value = "فشل تعديل المشرف الرجاء المحاولة لاحقا";
-        }, 2000);
-      }
+      adminForm.value = result;
     } else {
       // TODO: Call API to create admin
       const result = await authStore.addProduct(
         adminForm.value,
-        "api/users/admins/admin",
+        "api/users/admins/admin"
       );
       subAdmins.value.push({
         name: adminForm.value.name,
         email: adminForm.value.email,
         createdAt: new Date().toISOString(),
       });
-      if(!authStore.response.ok){
-      setTimeout(() => {
-          errorApi.value = "فشل أضافة المشرف الرجاء المحاولة لاحقا";
-        }, 2000);
-      }
     }
+  } catch (error) {
+    errorApi.value = "فشل أضافة/ تعديل المشرف الرجاء المحاولة لاحقا";
+    setTimeout(() => {
+      errorApi.value = "";
+    }, 2000);
+  } finally {
     showAddModal.value = false;
     resetForm();
-  } catch (error) {
-    errorApi.value = "falid:" + error;
-  } finally {
+
     loadingForm.value = false;
-    errorApi.value = "";
   }
 }
 function resetForm() {
@@ -282,7 +378,28 @@ function resetForm() {
     name: "",
     email: "",
     password: "",
+    phoneNumber: "",
   };
   showErrorInput.value = false;
 }
+const bothJob = () => {
+  showAddModal.value = false;
+  resetForm();
+};
 </script>
+<style scoped>
+.flex-number {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  direction: ltr;
+}
+.text-po {
+  direction: rtl;
+}
+@media (max-width: 425px) {
+  .w-small {
+    width: 100%;
+  }
+}
+</style>

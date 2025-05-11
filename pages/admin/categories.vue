@@ -3,18 +3,21 @@
   <h1 v-if="errorMess" class="w-full text-red-500 text-center">
     {{ errorMess }}
   </h1>
-  <h1 v-else-if="categories.length === 0" class="text-primary text-center">
-    لا يوجد عناصر لعرضها
-  </h1>
   <div v-else>
     <div class="mb-6 flex justify-between items-center">
       <h1 class="text-2xl font-semibold text-gray-900">التصنيفات</h1>
       <button @click="showAddModal = true" class="btn btn-primary">
         إضافة تصنيف
       </button>
+      <h2 v-if="errorMessone" class="w-full h-4 text-red-500 text-center">
+        {{ errorMessone }}
+      </h2>
     </div>
+    <h1 v-if="categories.length === 0" class="text-primary text-center">
+      لا يوجد عناصر لعرضها
+    </h1>
     <!-- Categories Table -->
-    <div class="table-sm bg-white shadow rounded-lg overflow-hidden">
+    <div v-else class="table-sm bg-white shadow rounded-lg overflow-hidden">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -26,7 +29,9 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="category in categories" :key="category.id">
-            <td class="rounded-full w-6 table-cell">{{ category.image }}</td>
+            <td class="rounded-full w-6 table-cell">
+              <img :src="category.imageUrl" alt="no-img" />
+            </td>
             <td class="table-cell">{{ category.name }}</td>
             <td class="table-cell">{{ category.productsCount }}</td>
             <td class="table-cell">
@@ -53,7 +58,7 @@
     <!-- Add/Edit Category Modal -->
     <div
       v-if="showAddModal"
-      class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
+      class="fixed z-[100] inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
     >
       <div class="bg-white rounded-lg p-6 max-w-md w-full">
         <h2 class="text-xl font-semibold mb-4">
@@ -76,18 +81,39 @@
             </p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700" for="image">
-              إرفاق صورة (حد أقصى 1 ميغا بايت)
+            <label class="mt-2 block text-sm font-medium text-gray-700" for="image">
+              إرفاق صورة
             </label>
-            <input
-              id="image"
-              type="file"
-              @change="handleFileChange"
-              accept="image/*"
-              class="all-border-input input mt-1 block w-full"
-              :class="{ 'border-red-500': errors.photo }"
-              @input="clearError('photo')"
-            />
+            <div class="relative">
+              <div class="flex items-center justify-center w-full">
+                <label
+                  for="image"
+                  class="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                >
+                  <div
+                    class="flex flex-col items-center justify-center pt-5 pb-6"
+                  >
+                    <Upload class="w-8 h-8 mb-2 text-gray-500" />
+                    <p class="mb-1 text-sm text-gray-500">
+                      <span class="font-semibold">اضغط للرفع</span>
+                    </p>
+                    <p class="text-xs text-gray-500">
+                      PNG, JPG أو JPEG (الحد الأقصى: 1MB)
+                    </p>
+                  </div>
+
+                  <input
+                    id="image"
+                    type="file"
+                    @change="handleFileChange"
+                    accept="image/*"
+                    class="hidden"
+                    :class="{ 'border-red-500': errors.photo }"
+                    @input="clearError('photo')"
+                  />
+                </label>
+              </div>
+            </div>
             <p v-if="errors.photo" class="text-red-500 text-sm mt-1 pl-2">
               {{ errors.photo }}
             </p>
@@ -95,18 +121,23 @@
           <div class="mt-6 flex justify-end space-x-3 space-x-reverse">
             <button
               type="button"
-              @click="showAddModal = false"
+              @click="bothJob"
               class="btn bg-gray-100 text-gray-700 hover:bg-gray-200"
             >
               إلغاء
             </button>
-            <button type="submit" class="btn btn-primary">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              :disabled="loadingForm"
+              :class="{ 'opacity-50 cursor-not-allowed': loadingForm }"
+            >
               {{ editingCategory ? "حفظ التغييرات" : "إضافة التصنيف" }}
             </button>
           </div>
           <loading v-if="loadingForm" />
           <div v-if="errorApi" class="mt-4 text-red-600 text-center">
-            {{ errorApi.message }}
+            {{ errorApi }}
           </div>
         </form>
       </div>
@@ -115,9 +146,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onBeforeMount } from "vue";
-import { Pencil, Trash2 } from "lucide-vue-next";
+import { ref, onBeforeMount } from "vue";
+import { Pencil, Trash2,Upload } from "lucide-vue-next";
 import { useAuthStore } from "~/stores/auth";
+import Swal from "sweetalert2";
 
 useHead({
   title: " صفحة التحكم بالتصنيفات",
@@ -132,7 +164,8 @@ const showAddModal = ref(false);
 const editingCategory = ref(null);
 const categoryForm = ref({
   name: "",
-  image: "",
+  imageUrl: "",
+  addedBy: JSON.parse(localStorage.getItem("_user")).id,
 });
 const errors = ref({
   name: "",
@@ -150,7 +183,7 @@ function editCategory(category) {
   categoryForm.value = { ...category };
   showAddModal.value = true;
 }
-
+const errorMessone = ref("");
 // دالة لتنظيف الأخطاء عند البدء بالكتابة
 const clearError = (field) => {
   if (errors.value[field] && showErrorInput.value) {
@@ -162,43 +195,64 @@ const clearError = (field) => {
 const validateForm = () => {
   let isValid = true;
   if (categoryForm.value.name.trim() === "") {
-    errors.value.password = "هذا الحقل مطلوب";
+    errors.value.name = "هذا الحقل مطلوب";
     isValid = false;
   }
+  if(errors.value.photo){
+    isValid = false;
+  }
+
   return isValid;
 };
 
-function deleteCategory(category) {
-  if (confirm("هل أنت متأكد من حذف هذا التصنيف؟")) {
-    try {
+async function deleteCategory(category) {
+  try {
+    const result = await Swal.fire({
+      title: "هل أنت متأكد؟",
+      text: "لن تتمكن من استرجاع هذا التصنيف!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "var(--primary-color)",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "نعم، احذف!",
+      cancelButtonText: "إلغاء",
+    });
+    if (result.isConfirmed) {
       showLoading.value = true;
-      // TODO: Call API to delete category
-      authStore.deletThing(category.value, `api/Categories/${category.id}`);
+      const deleteResult = await authStore.deletThing(
+        category,
+        `api/Categories/${category.id}`
+      );
       categories.value = categories.value.filter((a) => a.id !== category.id);
-      if (!authStore.response.ok) {
-        setTimeout(() => {
-          errorMess.value = "فشل حذف التصنيف الرجاء المحاولة لاحقا";
-        }, 2000);
-      }
-    } catch (error) {
-      setTimeout(() => {
-        errorMess.value = "فشل حذف التصنيف الرجاء المحاولة لاحقا";
-      }, 2000);
-    } finally {
-      showLoading.value = false;
-      errorMess.value = "";
+
+      await Swal.fire({
+        title: "تم الحذف!",
+        text: "تم حذف التصنيف بنجاح.",
+        icon: "success",
+        size: "small",
+        showConfirmButton: false,
+        timer: 600,
+        timerProgressBar: true,
+        width: "300px",
+      });
     }
+  } catch (error) {
+    errorMessone.value = "فشل حذف التصنيف الرجاء المحاولة لاحقا";
+    setTimeout(() => {
+      errorMessone.value = "";
+    }, 2000);
+  } finally {
+    showLoading.value = false;
   }
 }
-
 async function saveCategory() {
   showErrorInput.value = true;
   if (!validateForm()) return;
   const data = new FormData();
-  if (categoryForm.value.image) {
-    data.append("file", imgCategory);
+  if (imgCategory.value) {
+    data.append("file", imgCategory.value);
   }
-  data.append("jsonData", categoryForm.value);
+  data.append("jsonData", JSON.stringify(categoryForm.value));
   try {
     loadingForm.value = true;
     if (editingCategory.value) {
@@ -211,43 +265,34 @@ async function saveCategory() {
         ...editingCategory.value,
         ...categoryForm.value,
       };
-      if (!authStore.response.ok) {
-        setTimeout(() => {
-          errorApi.value = "فشل تعديل التصنيف الرجاء المحاولة لاحقا";
-        }, 2000);
-      }
+      categoryForm.value = result;
+      imgCategory.value = result.imageUrl;
     } else {
       // TODO: Call API to create category
-      const result = await authStore.addProduct(data, "api/Categories");
+      const resultCat = await authStore.addProduct(data, "api/Categories");
       categories.value.push({
-        ...categoryForm.value,
-        productsCount: 0,
+        ...resultCat,
+        // productsCount: 0,
       });
-      if (!authStore.response.ok) {
-        setTimeout(() => {
-          errorApi.value = "فشل أضافة التصنيف الرجاء المحاولة لاحقا";
-        }, 2000);
-      }
     }
+  } catch (error) {
+    errorApi.value = "فشل أضافة/تعديل التصنيف الرجاء المحاولة لاحقا";
+    setTimeout(() => {
+      errorApi.value = "";
+    }, 2000);
+  } finally {
     showAddModal.value = false;
     resetForm();
-  } catch (error) {
-    if (!authStore.response.ok) {
-      setTimeout(() => {
-        errorApi.value = "فشل أضافة/تعديل التصنيف الرجاء المحاولة لاحقا";
-      }, 2000);
-    }
-  } finally {
     loadingForm.value = false;
-    errorApi.value = "";
   }
 }
 
 function resetForm() {
   editingCategory.value = null;
   categoryForm.value = {
+    ...categoryForm.value,
     name: "",
-    image: "",
+    imageUrl: "",
   };
   imgCategory.value = null;
   showErrorInput.value = false;
@@ -260,11 +305,30 @@ function handleFileChange(event) {
 
   // الحجم الأقصى المسموح به: 1 ميغا بايت = 1048576 بايت
   if (file.size > 1048576) {
-    errors.photo.value = "حجم الصورة المسموح به هو 1 ميغا بايت كحد أقصى";
+    errors.value.photo = "حجم الصورة المسموح به هو 1 ميغا بايت كحد أقصى";
     event.target.value = null; // إعادة تعيين حقل الملف
     return;
   }
   imgCategory.value = file;
+  errors.value.photo = "";
+
+}
+const bothJob = () => {
+  showAddModal.value = false;
+  resterror();
+  resetJustForm();
+};
+function resetJustForm() {
+  categoryForm.value = {
+    name: "",
+    imageUrl: "",
+  };
+}
+function resterror() {
+  errors.value = {
+    name: "",
+    photo: "",
+  };
 }
 
 // show cat
@@ -272,14 +336,14 @@ onBeforeMount(async () => {
   showLoading.value = true;
   try {
     categories.value = await authStore.showProduct("api/Categories");
-    if (!authStore.response.ok){
+    if (!authStore.response.ok) {
       errorMess.value = "فشل جلب التصنيفات الرجاء المحاولة لاحقا ";
     }
   } catch (error) {
     errorMess.value = "فشل جلب التصنيفات الرجاء المحاولة لاحقا: ";
   } finally {
     showLoading.value = false;
+    errorMess.value = "";
   }
-
 });
 </script>

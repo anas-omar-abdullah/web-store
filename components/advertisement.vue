@@ -1,5 +1,5 @@
 <template>
-    <div  v-if="isVisible" class="announcement-bar">
+    <div v-if="isAdVisible" class="announcement-bar">
       <Transition name="fade" mode="out-in">
         <div
           v-if="currentAd"
@@ -10,26 +10,26 @@
         </div>
       </Transition>
       <button class="close-btn" @click="hideBar">
-  ✖
-</button>
-
+        ✖
+      </button>
     </div>
   </template>
   
   <script setup>
   import { ref, onMounted, onUnmounted } from "vue";
+  import { useAdvertisement } from '~/composables/useAdvertisement';
+  
+  const { isAdVisible, hideAd } = useAdvertisement();
   
   const ads = ref([
     { id: 1, text: "🔥 عرض خاص: خصم 50% على جميع المنتجات!" },
     { id: 2, text: "🚀 اشترك الآن واحصل على شهر مجاني!" },
     { id: 3, text: "🎁 هدية مجانية مع كل طلبية فوق 100 دولار!" },
   ]);
-  const isVisible = ref(true); 
   const hideBar = () => {
-  isVisible.value = false;
-  clearInterval(interval);
-};
-
+    hideAd();
+    clearInterval(interval);
+  };
   const currentIndex = ref(0);
   const currentAd = ref(ads.value[currentIndex.value]);
   let interval = null;
@@ -55,7 +55,11 @@
     padding: 10px;
     font-size: 1rem;
     font-weight: bold;
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
     width: 100%;
     overflow: hidden;
   }

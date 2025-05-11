@@ -3,8 +3,17 @@
     <h2 class="text-3xl font-bold text-center mb-8 text-[#3ca2fa]">
       تصنيفات المنتجات
     </h2>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <loading v-if="showLoading" />
+    <h3 v-else-if="errorMess" class="w-full text-red-500 text-center">
+      {{ errorMess }}
+    </h3>
+    <div v-else-if="categories.length === 0" class="text-primary text-center">
+      لا توجد تصنيفات متاحة حالياً
+    </div>
+    <div
+      v-else
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-20"
+    >
       <div
         v-for="category in categories"
         :key="category.id"
@@ -12,12 +21,14 @@
       >
         <div class="h-48 bg-gray-100 overflow-hidden">
           <img
-            :src="category.image"
+            :src="category.imageUrl"
             :alt="category.name"
             class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
           />
         </div>
-        <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+        <div
+          class="absolute inset-0 bg-black/20 flex items-center justify-center"
+        >
           <h3 class="text-2xl font-semibold text-white">{{ category.name }}</h3>
         </div>
         <div class="absolute bottom-4 left-1/2 -translate-x-1/2">
@@ -34,36 +45,43 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter, useState } from '#imports'
+import { ref } from "vue";
+import { useRouter, useState } from "#imports";
+const categories = ref([]);
+const showLoading = ref(false);
+const errorMess = ref("");
 
-const categories = ref([
-  {
-    id: 1,
-    name: "العناية بالبشرة",
-    slug: "/",
-    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9",
-  },
-  {
-    id: 2,
-    name: "مستحضرات التجميل",
-    slug: "/",
-    image: "https://images.unsplash.com/photo-1591348278863-a8fb3887e2aa",
-  },
-  {
-    id: 3,
-    name: "العناية بالشعر",
-    slug: "/",
-    image: "https://images.unsplash.com/photo-1559599101-f09722fb4948",
-  },
-])
+onBeforeMount(async () => {
+  try {
+    showLoading.value = true;
+    const { data } = await useFetch(
+      "https://muaazaltahan-001-site1.dtempurl.com/api/categories",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (data.value) {
+      categories.value = data.value;
+    }
+  } catch (error) {
+    errorMess.value = "فشل جلب أحدث التصنيفات الرجاء المحاولة لاحقا";
+  } finally {
+    showLoading.value = false;
+  }
+});
 
-const router = useRouter()
+const router = useRouter();
 // الحالة المشتركة لتخزين التصنيف المحدد
-const selectedCategory = useState('selectedCategory', () => '')
+const selectedCategory = useState("selectedCategory", () => "");
 
 function goToProducts(categoryName) {
-  selectedCategory.value = categoryName
-  router.push('/prodect')
+  selectedCategory.value = categoryName;
+  router.push({
+    path: "/prodect",
+    query: { category: categoryName }
+  });
 }
 </script>

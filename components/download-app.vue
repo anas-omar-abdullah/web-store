@@ -1,6 +1,6 @@
 <template>
   <div
-    class="all flex flex-col items-center justify-center px-4 bg-gray-50 "
+    class="mt-[126px] all flex flex-col items-center justify-center px-4 bg-gray-50 "
   >
     <p class="text-center text-lg sm:text-xl font-medium text-gray-800 mb-4">
       استمتع بتجربه وتسوق أفضل عبر تنزيل التطبيق

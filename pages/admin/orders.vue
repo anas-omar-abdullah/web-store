@@ -19,9 +19,8 @@
       </div>
     </div>
   </div>
-  <h1 v-if="errorMess" class="w-full text-red-500 text-center">{{ errorMess }}</h1>
-  <h1 v-else-if="orders.length === 0" class="text-primary text-center">
-    لا يوجد عناصر لعرضها
+  <h1 v-if="errorMess" class="w-full text-red-500 text-center">
+    {{ errorMess }}
   </h1>
   <div v-else>
     <!-- Orders Table -->
@@ -63,6 +62,9 @@
         </tbody>
       </table>
     </div>
+    <h1 v-if="orders.length === 0" class="mt-2 text-primary text-center">
+          لا يوجد عناصر لعرضها
+        </h1>
     <!-- Update Status Modal -->
     <div
       v-if="showStatusModal"
@@ -106,6 +108,7 @@
 <script setup>
 import { ref, computed, onBeforeMount } from "vue";
 import { RefreshCw } from "lucide-vue-next";
+import { useAuthStore } from "~/stores/auth";
 
 useHead({
   title: "عرض تفاصيل الطلبات",
@@ -114,6 +117,7 @@ useHead({
 definePageMeta({
   layout: "admin",
 });
+const authStore = useAuthStore();
 
 const orders = ref([]);
 const showStatusModal = ref(false);
@@ -159,12 +163,22 @@ function updateOrderStatus(order) {
   showStatusModal.value = true;
 }
 
-function saveOrderStatus() {
-
+async function saveOrderStatus() {
+  const url = `${authStore.urlAuth}/api/orders/order-status`;
+  showLoading.value = true;
   if (selectedOrder.value) {
-    showLoading.value = true;
     try {
       // TODO: Call API to update order status
+      const token = localStorage.getItem("token");
+      const response = await $fetch(url, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: {
+          orderId:selectedOrder.value.id,
+        } 
+      });
       const index = orders.value.findIndex(
         (o) => o.id === selectedOrder.value.id
       );
@@ -172,17 +186,12 @@ function saveOrderStatus() {
         ...selectedOrder.value,
         status: newStatus.value,
       };
-      if (!authStore.response.ok) {
-        setTimeout(() => {
-          errorMess.value = "فشل تعديل حالة الطلب الرجاء المحاولة لاحقا";
-        }, 2000);
-      }
     } catch (error) {
+      errorMess.value = "فشل تعديل حالة الطلب الرجاء المحاولة لاحقا";
       setTimeout(() => {
-        errorMess.value = "فشل تعديل حالة الطلب الرجاء المحاولة لاحقا";
+        errorMess.value = "";
       }, 2000);
     } finally {
-      errorMess.value = "";
       showLoading.value = false;
     }
   }
@@ -190,19 +199,17 @@ function saveOrderStatus() {
   selectedOrder.value = null;
   newStatus.value = "";
 }
-// load order 
+// load order
 onBeforeMount(async () => {
+  console.log("im hereeeeeeeeeeeeee")
   showLoading.value = true;
   try {
-    products.value = await authStore.showProduct("api/products");
-    if(!authStore.response.ok){
-      errorMess.value = "فشل جلب الطلبات الرجاء المحاولة لاحقا: "
-    }
+    orders.value = await authStore.showProduct("api/orders");
   } catch (error) {
-    errorMess.value = "فشل جلب الطلبات الرجاء المحاولة لاحقا "
+    errorMess.value = "فشل جلب الطلبات الرجاء المحاولة لاحقا ";
   } finally {
     showLoading.value = false;
+    errorMess.value = "";
   }
 });
-
 </script>

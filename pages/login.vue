@@ -1,11 +1,11 @@
 <template>
   <section
-    class="min-h-screen flex items-center justify-center container mx-auto px-4"
+    class="min-h-screen flex items-center justify-center container mx-auto px-4 c-all"
   >
     <div class="min-h-full max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8">
       <h1 class="text-center mb-4">تسجيل الدخول</h1>
       <form @submit.prevent="AdminLogin">
-        <div class="c-all">
+        <div class="">
           <div class="space-y-4">
             <div>
               <div>

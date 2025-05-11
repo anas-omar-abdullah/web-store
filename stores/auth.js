@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    urlAuth: "https://192.168.1.103:7010/",
+    urlAuth: "https://muaazaltahan-001-site1.dtempurl.com/",
     token: null,
     user: null,
     logoutTimer: null,
@@ -39,49 +39,53 @@ export const useAuthStore = defineStore("auth", {
     },
     // get product
     async showProduct(url) {
-        const token = localStorage.getItem("token");
-        const response = await $fetch(`${this.urlAuth}${url}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        return response;
+      const token = localStorage.getItem("token");
+      const response = await $fetch(`${this.urlAuth}${url}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response;
     },
     // Delet
     async deletThing(product, url) {
-        const token = localStorage.getItem("token");
-        const response = await $fetch(`${this.urlAuth}${url}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        return response;
-      },
-    // add product
-    async addProduct(formData,url){
-        const response = await $fetch(`${this.urlAuth}${url}`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-          },
-          body:formData
-        });
-        return response;
-  },
-      // update product
-      async updateProduct(formData,url){
-          const response = await $fetch(`${this.urlAuth}${url}`, {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${this.token}`,
-            },
-            body:formData
-          });
-          return response;
+      const token = localStorage.getItem("token");
+      const response = await $fetch(`${this.urlAuth}${url}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      console.log("product.id");
+      console.log(product.id);
+      return response;
     },
-  }
+    // add product
+    async addProduct(formData, url) {
+      const token = localStorage.getItem("token");
+      const response = await $fetch(`${this.urlAuth}${url}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      return response;
+    },
+    // update product
+    async updateProduct(formData, url) {
+      const token = localStorage.getItem("token");
+      const response = await $fetch(`${this.urlAuth}${url}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      return response;
+    },
+  },
 });

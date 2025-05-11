@@ -1,15 +1,13 @@
 <template>
-  <nav class="bg-white shadow-md">
-    <div
-      class="content container mx-auto flex items-center justify-between p-2"
-    >
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
+    <div class="content container mx-auto flex items-center justify-between p-2">
       <!-- logo -->
       <NuxtLink to="/">
         <img class="w-40" src="/logo.png" alt="logo" />
       </NuxtLink>
       <div class="hidden md:flex flex-1">
-        <!-- link for big scareen -->
-        <div class=" link-des md:flex flex-1 ">
+        <!-- link for big screen -->
+        <div class="link-des md:flex flex-1">
           <NuxtLink
             v-for="(link, index) in myLink"
             :key="index"
@@ -21,10 +19,10 @@
           </NuxtLink>
         </div>
       </div>
-      <div class="flex items-center space-x-4 ">
+      <div class="flex items-center space-x-4">
         <div class="ml-4 flex items-center">
           <button @click="logout" class="ml-4 flex items-center logout text-white">
-            تسجيل الخروج
+            <p>تسجيل الخروج</p>
             <LogOut class="w-5 h-5 pr-1" />
           </button>
           <button
@@ -45,7 +43,7 @@
       </div>
     </div>
     <!-- قائمة الصفحات للجوال -->
-    <div v-if="isMenuOpen" class="nav-link md:hidden bg-gray-100">
+    <div v-if="isMenuOpen" ref="popupRef" class="nav-link md:hidden bg-gray-100">
       <NuxtLink
         v-for="(link, index) in myLink"
         :key="index"
@@ -83,19 +81,35 @@
 
 <script setup>
 import { Bell, LucideMenu, LogOut } from "lucide-vue-next";
-import { ref, onMounted } from "vue";
-// import { io } from "socket.io-client";
+import { ref } from "vue";
+import { onClickOutside } from '@vueuse/core';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from "@/stores/auth";
+
+// تعريف الراوتر من vue-router
+const router = useRouter();
 
 const showNotifications = ref(false);
 const unreadNotifications = ref(0);
 const notifications = ref([]);
 const isSubAdmin = ref(JSON.parse(localStorage.getItem("_user"))?.role);
 
+const popupRef = ref(null);
 const isMenuOpen = ref(false);
+
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
 };
+
+// إغلاق القائمة عند الضغط خارجها باستخدام VueUse
+onClickOutside(popupRef, () => {
+  isMenuOpen.value = false;
+});
+
+// إغلاق القائمة عند التنقل بين الصفحات
+router.afterEach(() => {
+  isMenuOpen.value = false;
+});
 
 const myLink = [
   { name: "المنتجات", url: "/admin" },
@@ -103,21 +117,22 @@ const myLink = [
   { name: "المشرفين", url: "/admin/add-admin" },
   { name: "الطلبات", url: "/admin/orders" },
 ];
+
 const logout = () => {
   const authStore = useAuthStore();
   authStore.logout();
 };
-// const socket = ref(null);
 
+// يمكنك تفعيل socket إذا كنت تحتاج لذلك في onMounted
 // onMounted(() => {
 //   socket.value = io("ws://your-backend-url");
-
 //   socket.value.on("notification", (notification) => {
 //     notifications.value.unshift(notification);
 //     unreadNotifications.value++;
 //   });
 // });
 </script>
+
 <style scoped>
 .not-nav {
   right: calc(100% - 340px);
@@ -153,6 +168,11 @@ const logout = () => {
   justify-content: center;
 }
 .logout:hover {
+  background-color: white;
+  color: var(--primary-color);
+  transition: 0.2s;
+}
+.logout p:hover {
   background-color: white;
   color: var(--primary-color);
   transition: 0.2s;
