@@ -3,12 +3,15 @@
   <h1 v-if="errorMess" class="mt-8 w-full text-red-500 text-center">
     {{ errorMess }}
   </h1>
-  <div v-else class="all mt-[80px] container mx-auto px-4 py-8">
+  <div v-else class="all mt-[80px] container mx-auto px-4 py-8 min-h-scc">
     <!-- قسم التصفية -->
     <div class="mb-8 bg-white p-4 rounded-lg shadow">
       <h2 class="text-xl font-semibold mb-4 text-color">تصفية المنتجات</h2>
       <div class="flex flex-wrap gap-4">
-        <select v-model="selectedCategory" class="p-2 border rounded-md">
+        <select
+          v-model="selectedCategory"
+          class="p-2 border border-pr rounded-md"
+        >
           <option value="">جميع الفئات</option>
           <option
             v-for="category in categories"
@@ -22,6 +25,12 @@
     </div>
     <h2 v-if="products?.length === 0" class="mt-8 text-primary text-center">
       لا يوجد منتجات لعرضها
+    </h2>
+    <h2
+      v-if="filteredProducts.length === 0"
+      class="mt-8 text-primary text-center"
+    >
+      لا يوجد منتجات ضمن هذا التصنيف
     </h2>
     <div
       v-else
@@ -39,51 +48,56 @@
             class="w-full h-48 object-cover"
           />
         </NuxtLink>
-          <div class="p-4">
-            <h3 class="text-lg font-semibold mb-2">{{ product.name }}</h3>
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm text-gray-600">
-                <span v-for="(category, index) in product.categories" :key="index">
-                  {{ category }}{{ index < product.categories.length - 1 ? '، ' : '' }}
-                </span>
+        <div class="p-4">
+          <h3 class="text-lg font-semibold mb-2">{{ product.name }}</h3>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm text-gray-600">
+              <span
+                v-for="(category, index) in product.categories"
+                :key="index"
+              >
+                {{ category
+                }}{{ index < product.categories.length - 1 ? "، " : "" }}
               </span>
-              <span class="text-color font-bold">{{ product.price }} $</span>
-            </div>
-            <div
-              class="flex items-center justify-evenly mb-2 border border-black"
+            </span>
+            <span class="text-color font-bold">{{ product.price }} $</span>
+          </div>
+          <div
+            class="flex items-center justify-evenly mb-2 border rounded-2xl border-primary"
+          >
+            <span
+              @click="increment(product)"
+              :disabled="product.count >= 25"
+              class="text-2xl w-4 text-center text-color cursor-pointer"
+              :class="{
+                'opacity-50 !cursor-not-allowed':
+                  product.count >= product.quantity,
+              }"
+              >+</span
             >
-              <span
-                @click="increment(product)"
-                :disabled="product.count >= 25"
-                class="text-2xl w-4 text-center text-color cursor-pointer"
-                :class="{ 'opacity-50 !cursor-not-allowed': product.count >= product.quantity }"
-                >+</span
-              >
-              <span class="text-xl text-center">{{ product.count }}</span>
-              <span
-                @click="decrement(product)"
-                :disabled="product.count <= 1"
-                class="text-2xl w-4 text-center text-red-500 cursor-pointer"
-                :class="{ 'opacity-50 !cursor-not-allowed': product.count <= 1 }"
-                >-</span
-              >
-            </div>
-
-            <button
-              @click="goMenu(product)"
-              class="w-full border-var py-2 rounded-md transition-colors"
-            >
-              إضافة للسلة
-              <ShoppingCart class="inline-block w-4 h-4 ml-2" />
-            </button>
-            <NuxtLink :to="`buying/${product.id}`"
-              ><button
-                class="pay mt-4 w-full bg-color text-white py-2 rounded-md"
-              >
-                الذهاب للشراء
-              </button></NuxtLink
+            <span class="text-xl text-center">{{ product.count }}</span>
+            <span
+              @click="decrement(product)"
+              :disabled="product.count <= 1"
+              class="text-2xl w-4 text-center text-red-500 cursor-pointer"
+              :class="{ 'opacity-50 !cursor-not-allowed': product.count <= 1 }"
+              >-</span
             >
           </div>
+
+          <button
+            @click="goMenu(product)"
+            class="w-full border-var py-2 rounded-md transition-colors"
+          >
+            إضافة للسلة
+            <ShoppingCart class="inline-block w-4 h-4 ml-2" />
+          </button>
+          <NuxtLink :to="`/buying?id=${product.id}&count=${product.count}`">
+            <button class="pay mt-4 w-full bg-color text-white py-2 rounded-md">
+              الذهاب للشراء
+            </button>
+          </NuxtLink>
+        </div>
       </div>
     </div>
   </div>
@@ -93,9 +107,8 @@
 import { ref, computed, onBeforeMount } from "vue";
 import { ShoppingCart } from "lucide-vue-next";
 import { useState } from "#imports";
-import { useCounter } from "@vueuse/core";
 import { useRoute } from "vue-router";
-import Swal from 'sweetalert2';
+import { showToast } from "~/utils/toast";
 
 useHead({
   title: "كافة المنتجات",
@@ -117,7 +130,10 @@ const decrement = (product) => {
 };
 
 const route = useRoute();
-const selectedCategory = useState("selectedCategory", () => route.query.category || "");
+const selectedCategory = useState(
+  "selectedCategory",
+  () => route.query.category || ""
+);
 
 // تصفية المنتجات بناءً على التصنيف المختار
 const filteredProducts = computed(() => {
@@ -130,7 +146,7 @@ const filteredProducts = computed(() => {
 onBeforeMount(async () => {
   try {
     showLoading.value = true;
-    const { data } = await useFetch(
+    const data = await $fetch(
       "https://muaazaltahan-001-site1.dtempurl.com/api/Categories",
       {
         method: "GET",
@@ -139,8 +155,8 @@ onBeforeMount(async () => {
         },
       }
     );
-    if (data.value) {
-      categories.value = data.value;
+    if (data) {
+      categories.value = data;
     }
   } catch (error) {
     errorMess.value = "فشل جلب التصنيفات الرجاء المحاولة لاحقا";
@@ -149,7 +165,7 @@ onBeforeMount(async () => {
   }
   try {
     showLoading.value = true;
-    const { data } = await useFetch(
+    const data = await $fetch(
       "https://muaazaltahan-001-site1.dtempurl.com/api/products",
       {
         method: "GET",
@@ -158,10 +174,10 @@ onBeforeMount(async () => {
         },
       }
     );
-    if (data.value) {
-      products.value = data.value.map(product => ({
+    if (data) {
+      products.value = data.map((product) => ({
         ...product,
-        count: 1
+        count: 1,
       }));
     }
   } catch (error) {
@@ -170,39 +186,44 @@ onBeforeMount(async () => {
     showLoading.value = false;
   }
 });
-
 function goMenu(product) {
-  const stored = localStorage.getItem("products");
-  let products = stored ? JSON.parse(stored) : [];
-  const productIndex = products.findIndex(item => item.id === product.id);
-  
-  if (productIndex !== -1) {
-    products[productIndex].count = (products[productIndex].count || 0) + (product.count || 1);
-  } else {
-    products.push({
-      ...product,
-      count: product.count || 1
-    });
-  }
-  localStorage.setItem("products", JSON.stringify(products));
+  try {
+    const stored = localStorage.getItem("products");
+    let cartProducts = stored ? JSON.parse(stored) : [];
+    const productIndex = cartProducts.findIndex((item) => item.id === product.id);
 
-  // إظهار الإشعار
-  const Toast = Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 2000,
-    timerProgressBar: true,
-    didOpen: (toast) => {
-      toast.addEventListener('mouseenter', Swal.stopTimer)
-      toast.addEventListener('mouseleave', Swal.resumeTimer)
+    if (productIndex !== -1) {
+      // تحديث الكمية إذا كان المنتج موجود بالفعل
+      const newCount = cartProducts[productIndex].count + product.count;
+      if (newCount <= product.quantity) {
+        cartProducts[productIndex].count = newCount;
+      } else {
+        showToast("الكمية المطلوبة غير متوفرة", "error");
+        return;
+      }
+    } else {
+      // إضافة منتج جديد
+      cartProducts.push({
+        ...product,
+        count: product.count || 1,
+      });
     }
-  });
+    
+    localStorage.setItem("products", JSON.stringify(cartProducts));
+    showToast("تمت إضافة المنتج إلى السلة بنجاح");
+  } catch (error) {
+    showToast("حدث خطأ أثناء إضافة المنتج إلى السلة", "error");
+  }
+}
 
-  Toast.fire({
-    icon: 'success',
-    title: 'تمت إضافة المنتج إلى السلة بنجاح'
-  });
+async function handleSubmit() {
+  try {
+    // ... existing code ...
+    await showToast("تم إرسال الطلب بنجاح");
+    // ... rest of the code ...
+  } catch (error) {
+    showToast("فشل إرسال الطلب", "error");
+  }
 }
 </script>
 
@@ -222,5 +243,17 @@ function goMenu(product) {
 }
 .pay:hover {
   background-color: #0f8fff;
+}
+.min-h-scc {
+  min-height: calc(100vh - 80px);
+}
+.border-pr {
+  border: 1px solid var(--primary-color);
+  outline: none;
+}
+
+.border-pr:focus {
+  border: 1px solid var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color);
 }
 </style>

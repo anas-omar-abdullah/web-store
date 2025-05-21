@@ -1,5 +1,5 @@
-:root{
-    --primary-color: #3ca2fa;
+:root {
+  --primary-color: #3ca2fa;
 }
 
 @tailwind base;
@@ -20,9 +20,81 @@
     @apply rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary;
   }
   .table-header {
-    @apply px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider;
+    @apply px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap;
   }
   .table-cell {
     @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
   }
+  .table-container {
+    @apply block w-full overflow-x-auto;
+  }
+  
+  .responsive-table-container {
+    @apply w-full;
+  }
+  
+  /* إظهار شريط التمرير فقط في الشاشات الصغيرة */
+  @media (max-width: 1024px) {
+    .responsive-table-container {
+      @apply overflow-x-auto;
+    }
+    .responsive-table-inner {
+      min-width: 800px;
+    }
+  }
+  
+  /* إخفاء شريط التمرير في الشاشات الكبيرة */
+  @media (min-width: 1025px) {
+    .responsive-table-container {
+      @apply overflow-x-hidden;
+    }
+  }
+  
+  /* تحسين عرض الجداول */
+  .responsive-table-inner table {
+    @apply table-fixed;
+  }
+  
+  /* تحسين عرض الصور في الجداول */
+  .responsive-table-inner img {
+    @apply max-w-full max-h-full object-cover;
+  }
+}
+/* for contact us  */
+.contact-base-card {
+  @apply bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.contact-info-icon {
+  @apply flex items-center justify-center w-12 h-12 rounded-full bg-primary-100 text-primary-500;
+}
+
+.contact-glass-card {
+  @apply rounded-xl shadow-md transition-all duration-300;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.contact-gradient-bg {
+  background: linear-gradient(135deg, #f5f9ff 0%, #ebf4ff 100%);
+}
+
+.contact-link-hover {
+  @apply relative overflow-hidden;
+}
+
+.contact-link-hover::after {
+  @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary-400 transform scale-x-0 transition-transform duration-300 origin-left;
+  content: '';
+}
+
+.contact-link-hover:hover::after {
+  @apply transform scale-x-100;
+}
+
+.contact-social-icon {
+  @apply text-gray-500 hover:text-primary-500 transition-colors duration-300;
 }

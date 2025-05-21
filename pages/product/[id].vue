@@ -9,8 +9,7 @@
         <LucideArrowLeft class="w-5 h-5 mr-1" />
         العودة
       </NuxtLink>
-
-      <div class="mt-6" v-if="product">
+      <div class="mt-[60px]" v-if="product">
         <!-- صورة المنتج -->
         <div
           class="bg-gray-100 p-4 rounded-lg shadow-lg mb-6 h-[400px] flex items-center justify-center"
@@ -23,7 +22,6 @@
           />
           <div v-else class="text-gray-400 text-xl">لا توجد صورة للمنتج</div>
         </div>
-
         <!-- تفاصيل المنتج -->
         <div class="bg-white p-6 rounded-lg shadow-lg">
           <!-- اسم المنتج والسعر -->

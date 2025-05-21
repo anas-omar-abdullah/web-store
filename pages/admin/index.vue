@@ -15,66 +15,81 @@
       لا يوجد عناصر لعرضها
     </h1>
     <!-- Products Table -->
-    <div v-else class="table-sm bg-white shadow rounded-lg overflow-hidden">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th scope="col" class="table-header">صورة المنتج</th>
-            <th scope="col" class="table-header">اسم المنتج</th>
-            <th scope="col" class="table-header">التصنيف</th>
-            <th scope="col" class="table-header">السعر</th>
-            <th scope="col" class="table-header">الكمية</th>
-            <th scope="col" class="table-header">الحالة</th>
-            <th scope="col" class="table-header">الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="product in products" :key="product.id">
-            <td class="w-8 table-cell">
-              <img class="w-full" :src="product.imageUrl" alt="no-img" />
-            </td>
-            <td class="table-cell">{{ product.name }}</td>
-            <td class="table-cell">{{ product.category }}</td>
-            <td class="table-cell">{{ product.price }}</td>
-            <td class="table-cell">{{ product.quantity }}</td>
-            <td class="table-cell">
-              <span
-                :class="
-                  product.active
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                "
-                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-              >
-                {{ product.active ? "ظاهر" : "مخفي" }}
-              </span>
-            </td>
-            <td class="table-cell">
-              <div class="flex space-x-2 space-x-reverse">
-                <button
-                  @click="editProduct(product)"
-                  class="text-primary hover:text-primary/80"
+    <div
+      v-else
+      class="responsive-table-container"    >
+      <div
+      class="responsive-table-inner table-sm bg-white shadow rounded-lg overflow-hidden"      >
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="table-header">صورة المنتج</th>
+              <th scope="col" class="table-header">اسم المنتج</th>
+              <th scope="col" class="table-header">التصنيف</th>
+              <th scope="col" class="table-header">السعر</th>
+              <th scope="col" class="table-header">الكمية</th>
+              <th scope="col" class="table-header">الحالة</th>
+              <th scope="col" class="table-header">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="product in products" :key="product.id">
+              <td class="w-8 table-cell">
+                <img class="w-full" :src="product.imageUrl" alt="no-img" />
+              </td>
+              <td class="table-cell">{{ product.name }}</td>
+              <td class="table-cell">
+                <div class="flex flex-col gap-1">
+                  <span
+                    v-for="cat in product.categories"
+                    :key="cat.id"
+                    class="block"
+                  >
+                    {{ cat }}
+                  </span>
+                </div>
+              </td>
+              <td class="table-cell">{{ product.price }}</td>
+              <td class="table-cell">{{ product.quantity }}</td>
+              <td class="table-cell">
+                <span
+                  :class="
+                    product.active
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  "
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
                 >
-                  <Pencil class="h-5 w-5" />
-                </button>
-                <button
-                  @click="toggleVisibility(product)"
-                  class="text-yellow-500 hover:text-yellow-600"
-                >
-                  <Eye v-if="product.active" class="h-5 w-5" />
-                  <EyeOff v-else class="h-5 w-5" />
-                </button>
-                <button
-                  @click="deleteProduct(product)"
-                  class="text-red-500 hover:text-red-600"
-                >
-                  <Trash2 class="h-5 w-5" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                  {{ product.active ? "ظاهر" : "مخفي" }}
+                </span>
+              </td>
+              <td class="table-cell">
+                <div class="flex space-x-2 space-x-reverse">
+                  <button
+                    @click="editProduct(product)"
+                    class="text-primary hover:text-primary/80"
+                  >
+                    <Pencil class="h-5 w-5" />
+                  </button>
+                  <button
+                    @click="toggleVisibility(product)"
+                    class="text-yellow-500 hover:text-yellow-600"
+                  >
+                    <Eye v-if="product.active" class="h-5 w-5" />
+                    <EyeOff v-else class="h-5 w-5" />
+                  </button>
+                  <button
+                    @click="deleteProduct(product)"
+                    class="text-red-500 hover:text-red-600"
+                  >
+                    <Trash2 class="h-5 w-5" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     <!-- Add/Edit Product Modal -->
     <div
@@ -206,12 +221,28 @@
                     for="image"
                     class="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
                   >
-                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload class="w-8 h-8 mb-2 text-gray-500" />
+                    <div
+                      class="flex flex-col items-center justify-center pt-5 pb-6"
+                    >
+                      <Upload
+                        v-if="!imgProduct"
+                        class="w-8 h-8 mb-2 text-gray-500"
+                      />
+                      <CheckCircle v-else class="w-8 h-8 mb-2 text-green-500" />
                       <p class="mb-1 text-sm text-gray-500">
-                        <span class="font-semibold">اضغط للرفع</span>
+                        <span v-if="!imgProduct" class="font-semibold"
+                          >اضغط للرفع</span
+                        >
+                        <span v-else class="font-semibold text-green-500"
+                          >تم رفع الصورة بنجاح</span
+                        >
                       </p>
-                      <p class="text-xs text-gray-500">PNG, JPG أو JPEG (الحد الأقصى: 1MB)</p>
+                      <p v-if="!imgProduct" class="text-xs text-gray-500">
+                        PNG, JPG أو JPEG (الحد الأقصى: 1MB)
+                      </p>
+                      <p v-else class="text-xs text-green-500">
+                        تم اختيار الصورة
+                      </p>
                     </div>
                     <input
                       id="image"
@@ -299,10 +330,11 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
-  Upload
+  Upload,
+  CheckCircle,
 } from "lucide-vue-next";
 import { useAuthStore } from "@/stores/auth";
-import Swal from "sweetalert2";
+import { showToast, showConfirmMessage } from "~/utils/toast";
 
 useHead({
   title: "صفحة التحكم بالمنتجات",
@@ -362,6 +394,7 @@ function resterror() {
 }
 const bothJob = () => {
   showAddModal.value = false;
+  imgProduct.value = null;
   resterror();
   resetJustForm();
 };
@@ -398,7 +431,7 @@ const validateForm = () => {
     errors.value.quantity = "هذا الحقل مطلوب";
     isValid = false;
   }
-  if(errors.value.photo){
+  if (errors.value.photo) {
     isValid = false;
   }
   return isValid;
@@ -439,10 +472,12 @@ async function toggleVisibility(product) {
       },
       body: data,
     });
+    showToast("تم تحديث حالة المنتج بنجاح");
   } catch (error) {
     console.log(product.active);
     product.active = !product.active;
     errorMessone.value = "فشل تعديل حالة المنتج الرجاء المحاولة من جديد";
+    showToast("فشل تحديث حالة المنتج", "error");
     setTimeout(() => {
       errorMessone.value = "";
     }, 2000);
@@ -453,16 +488,10 @@ async function toggleVisibility(product) {
 
 async function deleteProduct(product) {
   try {
-    const result = await Swal.fire({
-      title: "هل أنت متأكد؟",
-      text: "لن تتمكن من استرجاع هذا المنتج!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "var(--primary-color)",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "نعم، احذف!",
-      cancelButtonText: "إلغاء",
-    });
+    const result = await showConfirmMessage(
+      "هل أنت متأكد؟",
+      "لن تتمكن من استرجاع هذا المنتج!"
+    );
 
     if (result.isConfirmed) {
       showLoading.value = true;
@@ -470,25 +499,11 @@ async function deleteProduct(product) {
         product,
         `api/products/${product.id}`
       );
-
       products.value = products.value.filter((a) => a.id !== product.id);
-
-      await Swal.fire({
-        title: "تم الحذف!", 
-        text: "تم حذف المنتج بنجاح.",
-        icon: "success",
-        size: "small",
-        showConfirmButton: false,
-        timer: 600,
-        timerProgressBar: true,
-        width: "300px",
-      });
+      showToast("تم حذف المنتج بنجاح");
     }
   } catch (error) {
-    errorMessone.value = "فشل حذف المنتج الرجاء المحاولة من جديد";
-    setTimeout(() => {
-      errorMessone.value = "";
-    }, 2000);
+    showToast("فشل حذف المنتج", "error");
   } finally {
     showLoading.value = false;
   }
@@ -523,7 +538,6 @@ async function saveProduct() {
   try {
     loadingForm.value = true;
     if (editingProduct.value) {
-      // TODO: Call API to update product
       const result = await authStore.updateProduct(data, "api/products");
       const index = products.value.findIndex(
         (p) => p.id === editingProduct.value.id
@@ -535,13 +549,15 @@ async function saveProduct() {
       };
       productForm.value = result;
       imgProduct.value = result.imageUrl;
+      showToast("تم تعديل المنتج بنجاح");
     } else {
-      // TODO: Call API to create product
       const newProduct = await authStore.addProduct(data, "api/products");
       products.value = [...products.value, newProduct];
+      showToast("تم إضافة المنتج بنجاح");
     }
   } catch (error) {
     errorApi.value = "فشل أضافة/ تعديل منتج الرجاء المحاولة لاحقا";
+    showToast("فشل العملية", "error");
     setTimeout(() => {
       errorApi.value = "";
     }, 2000);
@@ -555,6 +571,7 @@ function resetForm() {
   editingProduct.value = null;
   productForm.value = {
     ...productForm.value,
+    id: undefined,
     name: "",
     categories: [],
     description: "",

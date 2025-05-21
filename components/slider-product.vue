@@ -14,16 +14,16 @@
     <Swiper
       :modules="[Pagination]"
       :space-between="20"
-      :loop="true"
+      :loop="products.length > 4"
       :pagination="{
         el: '.swiper-pagination',
         clickable: true,
       }"
       :breakpoints="{
-        340: { slidesPerView: 1 },
-        640: { slidesPerView: 2 },
-        1025: { slidesPerView: 3 },
-        1275: { slidesPerView: 4 },
+        340: { slidesPerView: 1, slidesPerGroup: 1 },
+        640: { slidesPerView: Math.min(2, products.length), slidesPerGroup: 1 },
+        1025: { slidesPerView: Math.min(3, products.length), slidesPerGroup: 1 },
+        1275: { slidesPerView: Math.min(4, products.length), slidesPerGroup: 1 },
       }"
     >
       <SwiperSlide v-for="(product, index) in products" :key="index">

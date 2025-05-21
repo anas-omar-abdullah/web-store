@@ -15,13 +15,15 @@
     </h1>
 
     <!-- Sub-Admins Table -->
-    <div v-else class="table-sm bg-white shadow rounded-lg overflow-hidden">
+    <div v-else class="responsive-table-container">
+      <div class="responsive-table-inner table-sm bg-white shadow rounded-lg overflow-hidden">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
             <th scope="col" class="table-header">الاسم</th>
             <th scope="col" class="table-header">البريد الإلكتروني</th>
             <th scope="col" class="table-header">رقم الجوال</th>
+            <th scope="col" class="table-header">كلمة السر</th>
             <th scope="col" class="table-header">تاريخ الإضافة</th>
             <th scope="col" class="table-header">الإجراءات</th>
           </tr>
@@ -31,6 +33,7 @@
             <td class="table-cell">{{ admin.name }}</td>
             <td class="table-cell">{{ admin.email }}</td>
             <td class="table-cell">{{ admin.phoneNumber }}</td>
+            <td class="table-cell">{{ admin.password }}</td>
             <td class="table-cell">{{ formatDate(admin.createdAt) }}</td>
             <td class="table-cell">
               <div class="flex space-x-2 space-x-reverse">
@@ -51,6 +54,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- Add/Edit Sub-Admin Modal -->
@@ -90,7 +94,7 @@
                 required
               />
             </div>
-            <div v-if="!editingAdmin">
+            <div>
               <label class="block text-sm font-medium text-gray-700"
                 >كلمة المرور</label
               >
@@ -264,6 +268,26 @@ function editAdmin(admin) {
   };
   showAddModal.value = true;
 }
+
+const showToast = (message, icon = 'success') => {
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+      toast.addEventListener('mouseenter', Swal.stopTimer)
+      toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+  });
+
+  Toast.fire({
+    icon: icon,
+    title: message
+  });
+};
+
 async function deleteAdmin(admin) {
   try {
     const result = await Swal.fire({
@@ -283,20 +307,11 @@ async function deleteAdmin(admin) {
         `api/users/admins/admin/${admin.id}`
       );
       subAdmins.value = subAdmins.value.filter((a) => a.id !== admin.id);
-
-      await Swal.fire({
-        title: "تم الحذف!",
-        text: "تم حذف المشرف بنجاح.",
-        icon: "success",
-        size: "small",
-        showConfirmButton: false,
-        timer: 600,
-        timerProgressBar: true,
-        width: "300px",
-      });
+      showToast('تم حذف المشرف بنجاح');
     }
   } catch (error) {
     errorMess.value = "فشل حذف المشرف الرجاء المحاولة لاحقا";
+    showToast('فشل حذف المشرف', 'error');
     setTimeout(() => {
       errorMess.value = "";
     }, 2000);
@@ -304,6 +319,7 @@ async function deleteAdmin(admin) {
     showLoading.value = false;
   }
 }
+
 // دالة لتنظيف الأخطاء عند البدء بالكتابة
 const clearError = (field) => {
   if (errors.value[field] && showErrorInput.value) {
@@ -317,10 +333,20 @@ const validateForm = () => {
     errors.value.name = "هذا الحقل مطلوب";
     isValid = false;
   }
-  if (adminForm.value.password.length < 6) {
-    errors.value.password = "هذا الحقل مطلوب ويجب أن يكون اكبر من 5 عناصر";
+
+  if (!adminForm.value.password || adminForm.value.password.trim() === "") {
+    errors.value.password = "هذا الحقل مطلوب";
+    isValid = false;
+  } else if (adminForm.value.password.length < 6) {
+    errors.value.password = "يجب أن تكون كلمة المرور اكبر من 5 عناصر";
     isValid = false;
   }
+
+  if (!adminForm.value.phoneNumber ||  String(adminForm.value.phoneNumber).trim() === "") {
+    errors.value.phone = "هذا الحقل مطلوب";
+    isValid = false;
+  }
+
   return isValid;
 };
 
@@ -329,11 +355,7 @@ async function saveAdmin() {
   if (!validateForm()) return;
   try {
     loadingForm.value = true;
-    console.log(editingAdmin.value);
     if (editingAdmin.value) {
-      console.log("fddsfsd");
-      console.log(editingAdmin.value);
-      // TODO: Call API to update admin
       const result = await authStore.updateProduct(
         adminForm.value,
         "api/users/user"
@@ -348,8 +370,8 @@ async function saveAdmin() {
         phoneNumber: adminForm.value.phoneNumber,
       };
       adminForm.value = result;
+      showToast('تم تعديل المشرف بنجاح');
     } else {
-      // TODO: Call API to create admin
       const result = await authStore.addProduct(
         adminForm.value,
         "api/users/admins/admin"
@@ -359,16 +381,17 @@ async function saveAdmin() {
         email: adminForm.value.email,
         createdAt: new Date().toISOString(),
       });
+      showToast('تم إضافة المشرف بنجاح');
     }
   } catch (error) {
     errorApi.value = "فشل أضافة/ تعديل المشرف الرجاء المحاولة لاحقا";
+    showToast('فشل العملية', 'error');
     setTimeout(() => {
       errorApi.value = "";
     }, 2000);
   } finally {
     showAddModal.value = false;
     resetForm();
-
     loadingForm.value = false;
   }
 }
@@ -385,7 +408,14 @@ function resetForm() {
 const bothJob = () => {
   showAddModal.value = false;
   resetForm();
+  resterror();
 };
+function resterror() {
+  errors.value.name = "";
+  errors.value.password = "";
+  errors.value.phone = "";
+}
+
 </script>
 <style scoped>
 .flex-number {

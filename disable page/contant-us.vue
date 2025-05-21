@@ -95,6 +95,7 @@
 
 <script setup>
 import { ref } from "vue";
+import { showToast } from '~/utils/toast';
 
 useHead({
   title: "تواصل معنا",
@@ -145,26 +146,20 @@ async function submitForm() {
       method: "POST",
       body: form,
     });
-    goodMess.value = "تم الارسال بنجاح ";
-    setTimeout( () => {
-      goodMess.value = "";
-    },1500)
+    
+    await showToast('تم إرسال الرسالة بنجاح');
+
+    // إعادة تعيين الحقول بعد الإرسال
+    form.name = "";
+    form.email = "";
+    form.subject = "";
+    form.message = "";
+    showErrorInput.value = false;
   } catch (error) {
-    errorMess.value = "فشل الارسال الرجاء المحاولة لاحقا ";
-    setTimeout( () => {
-      errorMess.value = "";
-    },1500)
+    showToast('فشل إرسال الرسالة', 'error');
   } finally {
     showLoading.value = false;
   }
-  // هنا يمكنك إضافة الكود اللازم لإرسال البيانات إلى الخادم (API)
-  console.log("تم إرسال البيانات:", form);
-  // إعادة تعيين الحقول بعد الإرسال
-  form.name = "";
-  form.email = "";
-  form.subject = "";
-  form.message = "";
-  showErrorInput.value = false;
 }
 </script>
 <style scoped>

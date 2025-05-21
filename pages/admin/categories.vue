@@ -23,7 +23,6 @@
           <tr>
             <th scope="col" class="table-header">صورة التصنيف</th>
             <th scope="col" class="table-header">اسم التصنيف</th>
-            <th scope="col" class="table-header">عدد المنتجات</th>
             <th scope="col" class="table-header">الإجراءات</th>
           </tr>
         </thead>
@@ -33,7 +32,6 @@
               <img :src="category.imageUrl" alt="no-img" />
             </td>
             <td class="table-cell">{{ category.name }}</td>
-            <td class="table-cell">{{ category.productsCount }}</td>
             <td class="table-cell">
               <div class="flex space-x-2 space-x-reverse">
                 <button
@@ -93,12 +91,17 @@
                   <div
                     class="flex flex-col items-center justify-center pt-5 pb-6"
                   >
-                    <Upload class="w-8 h-8 mb-2 text-gray-500" />
+                    <Upload v-if="!imgCategory" class="w-8 h-8 mb-2 text-gray-500" />
+                    <CheckCircle v-else class="w-8 h-8 mb-2 text-green-500" />
                     <p class="mb-1 text-sm text-gray-500">
-                      <span class="font-semibold">اضغط للرفع</span>
+                      <span v-if="!imgCategory" class="font-semibold">اضغط للرفع</span>
+                      <span v-else class="font-semibold text-green-500">تم رفع الصورة بنجاح</span>
                     </p>
-                    <p class="text-xs text-gray-500">
+                    <p v-if="!imgCategory" class="text-xs text-gray-500">
                       PNG, JPG أو JPEG (الحد الأقصى: 1MB)
+                    </p>
+                    <p v-else class="text-xs text-green-500">
+                      تم اختيار الصورة
                     </p>
                   </div>
 
@@ -147,9 +150,9 @@
 
 <script setup>
 import { ref, onBeforeMount } from "vue";
-import { Pencil, Trash2,Upload } from "lucide-vue-next";
+import { Pencil, Trash2, Upload, CheckCircle } from "lucide-vue-next";
 import { useAuthStore } from "~/stores/auth";
-import Swal from "sweetalert2";
+import { showToast, showConfirmMessage } from '~/utils/toast';
 
 useHead({
   title: " صفحة التحكم بالتصنيفات",
@@ -207,40 +210,21 @@ const validateForm = () => {
 
 async function deleteCategory(category) {
   try {
-    const result = await Swal.fire({
-      title: "هل أنت متأكد؟",
-      text: "لن تتمكن من استرجاع هذا التصنيف!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "var(--primary-color)",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "نعم، احذف!",
-      cancelButtonText: "إلغاء",
-    });
+    const result = await showConfirmMessage(
+      "هل أنت متأكد؟",
+      "لن تتمكن من استرجاع هذه الفئة!"
+    );
     if (result.isConfirmed) {
       showLoading.value = true;
       const deleteResult = await authStore.deletThing(
         category,
-        `api/Categories/${category.id}`
+        `api/categories/${category.id}`
       );
-      categories.value = categories.value.filter((a) => a.id !== category.id);
-
-      await Swal.fire({
-        title: "تم الحذف!",
-        text: "تم حذف التصنيف بنجاح.",
-        icon: "success",
-        size: "small",
-        showConfirmButton: false,
-        timer: 600,
-        timerProgressBar: true,
-        width: "300px",
-      });
+      categories.value = categories.value.filter((c) => c.id !== category.id);
+      showToast('تم حذف الفئة بنجاح');
     }
   } catch (error) {
-    errorMessone.value = "فشل حذف التصنيف الرجاء المحاولة لاحقا";
-    setTimeout(() => {
-      errorMessone.value = "";
-    }, 2000);
+    showToast('فشل حذف الفئة', 'error');
   } finally {
     showLoading.value = false;
   }
@@ -256,8 +240,7 @@ async function saveCategory() {
   try {
     loadingForm.value = true;
     if (editingCategory.value) {
-      // TODO: Call API to update category
-      const result = await authStore.updateProduct(data, "api/Categories");
+      const result = await authStore.updateProduct(data, "api/categories");
       const index = categories.value.findIndex(
         (c) => c.id === editingCategory.value.id
       );
@@ -267,16 +250,18 @@ async function saveCategory() {
       };
       categoryForm.value = result;
       imgCategory.value = result.imageUrl;
+      showToast('تم تعديل الفئة بنجاح');
     } else {
-      // TODO: Call API to create category
-      const resultCat = await authStore.addProduct(data, "api/Categories");
+      const resultCat = await authStore.addProduct(data, "api/categories");
       categories.value.push({
         ...resultCat,
         // productsCount: 0,
       });
+      showToast('تم إضافة الفئة بنجاح');
     }
   } catch (error) {
-    errorApi.value = "فشل أضافة/تعديل التصنيف الرجاء المحاولة لاحقا";
+    errorApi.value = "فشل أضافة/ تعديل الفئة الرجاء المحاولة لاحقا";
+    showToast('فشل العملية', 'error');
     setTimeout(() => {
       errorApi.value = "";
     }, 2000);
@@ -293,6 +278,8 @@ function resetForm() {
     ...categoryForm.value,
     name: "",
     imageUrl: "",
+    addedBy: JSON.parse(localStorage.getItem("_user")).id,
+
   };
   imgCategory.value = null;
   showErrorInput.value = false;
@@ -317,6 +304,7 @@ const bothJob = () => {
   showAddModal.value = false;
   resterror();
   resetJustForm();
+  imgCategory.value = null;
 };
 function resetJustForm() {
   categoryForm.value = {
@@ -335,7 +323,7 @@ function resterror() {
 onBeforeMount(async () => {
   showLoading.value = true;
   try {
-    categories.value = await authStore.showProduct("api/Categories");
+    categories.value = await authStore.showProduct("api/categories");
     if (!authStore.response.ok) {
       errorMess.value = "فشل جلب التصنيفات الرجاء المحاولة لاحقا ";
     }

@@ -11,48 +11,115 @@
 
       <!-- حقل البحث في الشاشات الكبيرة -->
       <div class="hidden md:flex flex-1">
-        <div class="relative w-2/4">
-          <button @click="serachProduct">
+        <div class="relative w-2/4" ref="searchContainer">
+          <button @click="searchProducts">
             <LucideSearch class="absolute left-3 top-1/2 -translate-y-1/2" />
           </button>
           <input
             v-model="searchText"
             type="text"
-            placeholder="بحث..."
+            placeholder="بحث عن منتج..."
             class="input-search w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+            @input="searchProducts"
           />
           <transition name="fade">
             <div
               v-if="isSerOpen"
-              class="absolute left-full ml-2 mt-2 w-80 bg-white border border-gray-200 shadow-lg rounded-lg p-4 z-10"
+              class="absolute right-0 mt-2 w-[500px] bg-white border border-gray-200 shadow-xl rounded-xl p-4 z-50"
             >
-              <h3 class="text-lg font-semibold mb-2">نتائج البحث</h3>
-              <div class="max-h-64 overflow-y-auto">
-                <div v-if="isLoading" class="p-4 text-center">
-                  جاري البحث...
-                </div>
-                <div v-else-if="errorMessage" class="p-4 text-red-500">
-                  {{ errorMessage }}
-                </div>
-                <div v-else-if="results.length === 0" class="p-4">
-                  لا توجد نتائج
-                </div>
-                <div v-else class="results"></div>
-                <div
-                  v-for="product in results"
-                  :key="product.id"
-                  class="flex items-center border-b border-gray-200 py-2"
+              <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="text-lg font-semibold text-gray-800">نتائج البحث</h3>
+                <button
+                  @click="isSerOpen = false"
+                  class="text-gray-500 hover:text-gray-700"
                 >
-                  <img
-                    :src="product.image"
-                    :alt="product.name"
-                    loading="lazy"
-                    class="w-12 h-12 object-cover rounded mr-3"
-                  />
-                  <div class="flex-1">
-                    <h3 class="font-medium">{{ product.name }}</h3>
-                    <p class="text-sm text-gray-600">{{ product.price }} $</p>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="max-h-[400px] overflow-y-auto custom-scrollbar">
+                <div v-if="isLoading" class="p-6 text-center">
+                  <div
+                    class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto"
+                  ></div>
+                  <p class="mt-3 text-gray-600">جاري البحث عن المنتجات...</p>
+                </div>
+                <div v-else-if="errorMessage" class="p-6 text-center">
+                  <div class="text-red-500 mb-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-12 w-12 mx-auto"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
                   </div>
+                  <p class="text-red-500 font-medium">{{ errorMessage }}</p>
+                </div>
+                <div v-else-if="results.length === 0" class="p-6 text-center">
+                  <div class="text-gray-400 mb-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-12 w-12 mx-auto"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+                  <p class="text-gray-500 font-medium">لا توجد نتائج للبحث</p>
+                </div>
+                <div v-else class="space-y-3">
+                  <NuxtLink
+                    v-for="product in results"
+                    :key="product.id"
+                    :to="`/product/${product.id}`"
+                    class="flex items-center p-3 hover:bg-gray-50 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200"
+                    @click="isSerOpen = false"
+                  >
+                    <div class="relative w-20 h-20 flex-shrink-0">
+                      <img
+                        :src="product.image"
+                        :alt="product.name"
+                        loading="lazy"
+                        class="w-full h-full object-cover rounded-lg shadow-sm"
+                      />
+                    </div>
+                    <div class="flex-1 mr-4">
+                      <h3 class="font-medium text-gray-900 mb-1">
+                        {{ product.name }}
+                      </h3>
+                      <p class="text-sm text-gray-600 line-clamp-2">
+                        {{ product.description }}
+                      </p>
+                      <p class="text-primary font-semibold mt-2">
+                        {{ product.price }} $
+                      </p>
+                    </div>
+                  </NuxtLink>
                 </div>
               </div>
             </div>
@@ -97,6 +164,7 @@
               v-if="isCartOpen"
               class="absolute left-full ml-2 mt-2 w-80 bg-white border border-gray-200 shadow-lg rounded-lg p-4 z-10"
             >
+              <Loading v-if="cartLoading" />
               <h3 class="text-lg font-semibold mb-2">سلة المشتريات</h3>
               <div class="see max-h-64 overflow-y-auto">
                 <!-- تكرار العناصر في السلة -->
@@ -107,8 +175,8 @@
                 >
                   <!-- صورة المنتج (اختياري) -->
                   <img
-                    v-if="item.image"
-                    :src="item.image"
+                    v-if="item.imageUrl"
+                    :src="item.imageUrl"
                     alt="صورة المنتج"
                     class="w-12 h-12 object-cover rounded mr-3"
                   />
@@ -151,13 +219,130 @@
       </div>
     </div>
     <!-- حقل البحث للجوال -->
-    <div v-if="isSearchOpen" class="p-4 md:hidden">
-      <input
-        type="text"
-        placeholder="بحث..."
-        class="search-sm w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
-      />
-    </div>
+    <transition name="slide">
+      <div
+        v-if="isSearchOpen"
+        class="fixed inset-0 bg-white z-[1000] md:hidden"
+      >
+        <div class="p-4 border-b">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">البحث عن المنتجات</h2>
+            <button
+              @click="closeSearch"
+              class="p-2 hover:bg-gray-100 rounded-full"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <div class="relative">
+            <button
+              @click="searchProducts"
+              class="absolute left-3 top-1/2 -translate-y-1/2"
+            >
+              <LucideSearch class="w-5 h-5 text-gray-500" />
+            </button>
+            <input
+              v-model="searchText"
+              type="text"
+              placeholder="اكتب اسم المنتج للبحث..."
+              class="search-sm w-full pl-10 pr-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              @input="searchProducts"
+              ref="searchInput"
+            />
+          </div>
+        </div>
+
+        <!-- نتائج البحث للجوال -->
+        <div class="overflow-y-auto h-[calc(100vh-120px)]">
+          <div v-if="isLoading" class="p-6 text-center">
+            <div
+              class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto"
+            ></div>
+            <p class="mt-3 text-gray-600">جاري البحث عن المنتجات...</p>
+          </div>
+          <div v-else-if="errorMessage" class="p-6 text-center">
+            <div class="text-red-500 mb-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-12 w-12 mx-auto"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <p class="text-red-500 font-medium">{{ errorMessage }}</p>
+          </div>
+          <div v-else-if="results.length === 0" class="p-6 text-center">
+            <div class="text-gray-400 mb-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-12 w-12 mx-auto"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <p class="text-gray-500 font-medium">لا توجد نتائج للبحث</p>
+          </div>
+          <div v-else class="divide-y divide-gray-200">
+            <NuxtLink
+              v-for="product in results"
+              :key="product.id"
+              :to="`/product/${product.id}`"
+              class="flex items-center p-4 hover:bg-gray-50 transition-colors duration-200"
+              @click="closeSearch"
+            >
+              <div class="relative w-20 h-20 flex-shrink-0">
+                <img
+                  :src="product.image"
+                  :alt="product.name"
+                  loading="lazy"
+                  class="w-full h-full object-cover rounded-lg shadow-sm"
+                />
+              </div>
+              <div class="flex-1 mr-4">
+                <h3 class="font-medium text-gray-900 mb-1">
+                  {{ product.name }}
+                </h3>
+                <p class="text-sm text-gray-600 line-clamp-2">
+                  {{ product.description }}
+                </p>
+                <p class="text-primary font-semibold mt-2">
+                  {{ product.price }} $
+                </p>
+              </div>
+            </NuxtLink>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <!-- قائمة الصفحات للجوال -->
     <div
@@ -179,11 +364,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import { LucideSearch, LucideShoppingCart, LucideMenu } from "lucide-vue-next";
-import { onClickOutside, useDebounce } from "@vueuse/core";
+import { onClickOutside } from "@vueuse/core";
 import { useRouter } from "vue-router";
-import { useAdvertisement } from '~/composables/useAdvertisement';
+import { useAdvertisement } from "~/composables/useAdvertisement";
 
 const router = useRouter();
 const { isAdVisible } = useAdvertisement();
@@ -191,6 +376,7 @@ const { isAdVisible } = useAdvertisement();
 const isMenuOpen = ref(false);
 const isSearchOpen = ref(false);
 const popupRef = ref(null);
+const cartLoading = ref(false);
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
@@ -198,6 +384,14 @@ const toggleMenu = () => {
 
 const toggleSearch = () => {
   isSearchOpen.value = !isSearchOpen.value;
+  if (isSearchOpen.value) {
+    // التركيز على حقل البحث عند فتحه
+    nextTick(() => {
+      searchInput.value?.focus();
+    });
+  } else {
+    closeSearch();
+  }
 };
 // إغلاق القائمة عند الضغط خارجها باستخدام VueUse
 onClickOutside(popupRef, () => {
@@ -212,11 +406,33 @@ router.afterEach(() => {
 const menuItems = [
   { name: "الرئيسية", link: "/" },
   { name: "المنتجات", link: "/prodect" },
-  { name: "اتصل بنا", link: "/contant-us" },
+  { name: "اتصل بنا", link: "/contact" },
 ];
 const isCartOpen = ref(false);
+const cartItems = ref([]);
+
 const toggleCart = () => {
   isCartOpen.value = !isCartOpen.value;
+  if (isCartOpen.value) {
+    loadCartItems();
+  }
+};
+
+const loadCartItems = () => {
+  try {
+    cartLoading.value = true;
+    const storedProducts = localStorage.getItem("products");
+    if (storedProducts) {
+      cartItems.value = JSON.parse(storedProducts);
+    } else {
+      cartItems.value = [];
+    }
+  } catch (error) {
+    console.error("فشل في جلب المنتجات من السلة:", error);
+    cartItems.value = [];
+  } finally {
+    cartLoading.value = false;
+  }
 };
 
 // مرجع لحاوية السلة
@@ -231,45 +447,59 @@ const handleClickOutside = (event) => {
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
+  loadCartItems();
+
+  // إضافة مراقب لتغييرات localStorage
+  window.addEventListener("storage", (event) => {
+    if (event.key === "products") {
+      loadCartItems();
+    }
+  });
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
+  // إزالة مراقب localStorage
+  window.removeEventListener("storage", loadCartItems);
 });
-// مثال لعناصر السلة
-const cartItems = ref([
-  {
-    id: 1,
-    name: "منتج",
-    quantity: 2,
-    price: 50,
-    image: "https://via.placeholder.com/48",
-  },
-]);
+
+// إضافة مراقب محلي للتغييرات في localStorage
+const setupLocalStorageWatcher = () => {
+  const originalSetItem = localStorage.setItem;
+  localStorage.setItem = function (key, value) {
+    const event = new Event("storage");
+    event.key = key;
+    event.newValue = value;
+    originalSetItem.apply(this, arguments);
+    window.dispatchEvent(event);
+  };
+};
+
+onMounted(() => {
+  setupLocalStorageWatcher();
+});
+
 // result search
 const isSerOpen = ref(false);
-const toggleSer = () => {
-  isSerOpen.value = !isSerOpen.value;
-};
 
 const results = ref([]);
 const searchText = ref("");
-const errorMess = ref("");
-const showLoading = ref(false);
-const serachProduct = async () => {
+const errorMessage = ref("");
+const isLoading = ref(false);
+
+const searchProducts = async () => {
   if (!searchText.value.trim()) {
-    errorMess.value = "الرجاء إدخال كلمة بحث";
-    isSearchOpen.value = false;
-    setTimeout(() => {
-      errorMess.value = "";
-    }, 2000);
+    results.value = [];
+    isSerOpen.value = false;
     return;
   }
+
   try {
-    errorMess.value = "";
-    showLoading.value = true;
-    isSearchOpen.value = true;
-    const { data } = await $fetch(
+    isLoading.value = true;
+    isSerOpen.value = true;
+    errorMessage.value = "";
+
+    const response = await $fetch(
       "https://muaazaltahan-001-site1.dtempurl.com/api/products",
       {
         method: "GET",
@@ -278,25 +508,59 @@ const serachProduct = async () => {
         },
       }
     );
-    results.value = data;
+
+    // التحقق من وجود البيانات قبل التصفية
+    if (response && Array.isArray(response)) {
+      results.value = response.filter((product) =>
+        product.name.toLowerCase().includes(searchText.value.toLowerCase())
+      );
+    } else if (response && response.data && Array.isArray(response.data)) {
+      results.value = response.data.filter((product) =>
+        product.name.toLowerCase().includes(searchText.value.toLowerCase())
+      );
+    } else {
+      results.value = [];
+      errorMessage.value = "لم يتم العثور على بيانات المنتجات";
+    }
   } catch (error) {
-    errorMess.value = "حدث خطأ أثناء البحث";
-    setTimeout(() => {
-      errorMess.value = "";
-    }, 1000);
+    console.error("Search error:", error);
+    errorMessage.value = "حدث خطأ أثناء البحث";
+    results.value = [];
   } finally {
-    showLoading.value = false;
+    isLoading.value = false;
   }
 };
 
-const debouncedSearch = useDebounce(serachProduct, 3000);
-watch(searchText, () => {
-  debouncedSearch();
+// تحسين مراقبة التغييرات في حقل البحث
+watch(searchText, (newValue) => {
+  if (newValue.trim()) {
+    searchProducts();
+  } else {
+    results.value = [];
+    isSerOpen.value = false;
+  }
 });
 
-onClickOutside(document.querySelector('.relative'), () => {
+// إضافة معالج للنقر خارج نافذة البحث
+const searchContainer = ref(null);
+
+onClickOutside(searchContainer, () => {
+  isSerOpen.value = false;
+});
+
+onClickOutside(document.querySelector(".relative"), () => {
   isSearchOpen.value = false;
 });
+
+// دالة لإغلاق البحث
+const closeSearch = () => {
+  isSearchOpen.value = false;
+  isSerOpen.value = false;
+  searchText.value = "";
+};
+
+// إضافة مرجع لحقل البحث
+const searchInput = ref(null);
 </script>
 
 <style scoped>
@@ -362,5 +626,90 @@ onClickOutside(document.querySelector('.relative'), () => {
   padding: 1rem;
   margin: 1rem 0;
   border-radius: 8px;
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) #f3f4f6;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color);
+  border-radius: 3px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* تحسينات للبحث في الشاشات الصغيرة */
+.search-sm {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.search-sm:focus {
+  background-color: white;
+  border-color: var(--primary-color);
+}
+
+/* تأثيرات الحركة */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+.slide-enter-to,
+.slide-leave-from {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .custom-scrollbar {
+    max-height: calc(100vh - 200px);
+  }
 }
 </style>

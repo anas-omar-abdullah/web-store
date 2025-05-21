@@ -59,8 +59,6 @@ export const useAuthStore = defineStore("auth", {
           "Content-Type": "application/json",
         },
       });
-      console.log("product.id");
-      console.log(product.id);
       return response;
     },
     // add product
