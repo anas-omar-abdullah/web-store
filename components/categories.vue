@@ -78,7 +78,9 @@ const router = useRouter();
 const selectedCategory = useState("selectedCategory", () => "");
 
 function goToProducts(categoryName) {
+  console.log('Selected category name:', categoryName);
   selectedCategory.value = categoryName;
+  console.log('Updated selectedCategory state:', selectedCategory.value);
   router.push({
     path: "/prodect",
     query: { category: categoryName }

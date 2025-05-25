@@ -15,8 +15,8 @@
           <option value="">جميع الفئات</option>
           <option
             v-for="category in categories"
-            :key="category"
-            :value="category"
+            :key="category.id"
+            :value="category.name"
           >
             {{ category.name }}
           </option>
@@ -27,7 +27,7 @@
       لا يوجد منتجات لعرضها
     </h2>
     <h2
-      v-if="filteredProducts.length === 0"
+      v-else-if="filteredProducts.length === 0"
       class="mt-8 text-primary text-center"
     >
       لا يوجد منتجات ضمن هذا التصنيف
@@ -68,7 +68,7 @@
             <span
               @click="increment(product)"
               :disabled="product.count >= 25"
-              class="text-2xl w-4 text-center text-color cursor-pointer"
+              class="text-2xl w-4 text-center text-color cursor-pointer select-none"
               :class="{
                 'opacity-50 !cursor-not-allowed':
                   product.count >= product.quantity,
@@ -79,7 +79,7 @@
             <span
               @click="decrement(product)"
               :disabled="product.count <= 1"
-              class="text-2xl w-4 text-center text-red-500 cursor-pointer"
+              class="text-2xl w-4 text-center text-red-500 cursor-pointer select-none"
               :class="{ 'opacity-50 !cursor-not-allowed': product.count <= 1 }"
               >-</span
             >
@@ -137,10 +137,16 @@ const selectedCategory = useState(
 
 // تصفية المنتجات بناءً على التصنيف المختار
 const filteredProducts = computed(() => {
+  console.log('Filtering with category:', selectedCategory.value);
   if (!selectedCategory.value) return products.value;
-  return products.value.filter(
-    (product) => product.category === selectedCategory.value
-  );
+  const filtered = products.value.filter((product) => {
+    console.log('Product:', product.name, 'Categories:', JSON.stringify(product.categories));
+    return product.categories && product.categories.some(cat => 
+      typeof cat === 'string' ? cat === selectedCategory.value : cat.name === selectedCategory.value
+    );
+  });
+  console.log('Filtered products:', JSON.stringify(filtered, null, 2));
+  return filtered;
 });
 
 onBeforeMount(async () => {
@@ -157,6 +163,7 @@ onBeforeMount(async () => {
     );
     if (data) {
       categories.value = data;
+      console.log('Categories data:', JSON.stringify(categories.value, null, 2));
     }
   } catch (error) {
     errorMess.value = "فشل جلب التصنيفات الرجاء المحاولة لاحقا";
@@ -179,6 +186,8 @@ onBeforeMount(async () => {
         ...product,
         count: 1,
       }));
+      console.log('Products data:', JSON.stringify(products.value, null, 2));
+      console.log('Selected Category:', selectedCategory.value);
     }
   } catch (error) {
     errorMess.value = "فشل جلب المنتجات الرجاء المحاولة لاحقا";

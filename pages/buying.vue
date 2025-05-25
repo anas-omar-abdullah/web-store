@@ -11,7 +11,31 @@
         <form @submit.prevent="submitForm">
           <div class="grid grid-cols-1 gap-4">
             <div class="w-full max-w-xl mx-auto">
-              <label class="block text-gray-700 mb-2 text-right" for="address">العنوان</label>
+              <label class="block text-gray-700 mb-2 text-right" for="name"
+                >الاسم</label
+              >
+              <input
+                id="name"
+                v-model="form.name"
+                type="text"
+                placeholder="أدخل اسمك"
+                class="w-full border rounded-md p-3 mb-2 all-border-input text-right"
+                :class="{ '!border-red-500': errors.name }"
+                @input="clearError('name')"
+              />
+              <p
+                v-if="errors.name"
+                class="text-red-500 text-sm mt-1 text-right"
+              >
+                {{ errors.name }}
+              </p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4">
+            <div class="w-full max-w-xl mx-auto">
+              <label class="block text-gray-700 mb-2 text-right" for="address"
+                >العنوان</label
+              >
               <input
                 id="address"
                 v-model="form.address"
@@ -21,12 +45,17 @@
                 :class="{ '!border-red-500': errors.address }"
                 @input="clearError('address')"
               />
-              <p v-if="errors.address" class="text-red-500 text-sm mt-1 text-right">
+              <p
+                v-if="errors.address"
+                class="text-red-500 text-sm mt-1 text-right"
+              >
                 {{ errors.address }}
               </p>
             </div>
             <div class="w-full max-w-xl mx-auto">
-              <label class="mt-4 block text-gray-700 text-right mb-2">رقم الهاتف</label>
+              <label class="block text-gray-700 text-right mb-2"
+                >رقم الهاتف</label
+              >
               <div class="flex-number">
                 <div ref="dropdownRef" class="relative flex-grow-0">
                   <button
@@ -60,7 +89,10 @@
                   @input="clearError('phone')"
                 />
               </div>
-              <p v-if="errors.phone" class="text-red-500 text-sm mt-1 text-right">
+              <p
+                v-if="errors.phone"
+                class="text-red-500 text-sm mt-1 text-right"
+              >
                 {{ errors.phone }}
               </p>
             </div>
@@ -101,8 +133,8 @@
 import { ref, onMounted } from "vue";
 import { LucideCheck, ChevronDown } from "lucide-vue-next";
 import { onClickOutside } from "@vueuse/core";
-import { useRoute, useRouter } from 'vue-router';
-import { showToast, showConfirmMessage } from '~/utils/toast';
+import { useRoute, useRouter } from "vue-router";
+import { showToast, showConfirmMessage } from "~/utils/toast";
 
 useHead({
   title: "صفحة الشراء",
@@ -115,10 +147,12 @@ const productCount = ref(route.query.count);
 const showLoading = ref(false);
 
 const form = ref({
+  name:"",
   address: "",
   phone: "",
 });
 const errors = ref({
+  name:"",
   address: "",
   phone: "",
 });
@@ -136,7 +170,8 @@ const remember = ref(false);
 onMounted(() => {
   const savedInfo = localStorage.getItem("loginInfo");
   if (savedInfo) {
-    const { address, phone } = JSON.parse(savedInfo);
+    const { name, address, phone } = JSON.parse(savedInfo);
+    form.value.name = name;
     form.value.address = address;
     form.value.phone = phone;
     remember.value = true;
@@ -172,6 +207,11 @@ const clearError = (field) => {
 
 const validateForm = () => {
   let isValid = true;
+  if (!form.value.name || form.value.name.trim() === "") {
+    errors.value.name = "هذا الحقل مطلوب";
+    isValid = false;
+  }
+
   if (!form.value.address || form.value.address.trim() === "") {
     errors.value.address = "هذا الحقل مطلوب";
     isValid = false;
@@ -188,31 +228,66 @@ async function submitForm() {
   if (!validateForm()) return;
   showLoading.value = true;
   try {
+    let products = [];
+    
+    // Check if we have route parameters
+    if (productId.value && productCount.value) {
+      products = [{
+        productId: productId.value,
+        quantity: productCount.value
+      }];
+    } else {
+      // Get products from localStorage
+      const storedProducts = localStorage.getItem('products');
+      if (storedProducts) {
+        const parsedProducts = JSON.parse(storedProducts);
+        products = parsedProducts.map(item => ({
+          productId: item.id,
+          quantity: item.count
+        }));
+      }
+    }
+
+    // If no products found in either case, show error
+    if (products.length === 0) {
+      showToast("لا توجد منتجات للطلب", "error");
+      return;
+    }
+
     const orderData = {
-      productId: productId.value,
-      quantity: productCount.value,
+      products: products,
+      name: form.value.name,
       address: form.value.address,
-      phone: selectedCountryCode.value + form.value.phone
+      phoneNumber: selectedCountryCode.value + form.value.phone,
+      createdAt: new Date().toISOString(),
+      city: "fdsf",
     };
 
-    const response = await $fetch("https://muaazaltahan-001-site1.dtempurl.com//api/orders/order-products", {
-      method: "POST",
-      body: orderData,
-      headers: {
-        'Content-Type': 'application/json'
+    const response = await $fetch(
+      "https://muaazaltahan-001-site1.dtempurl.com/api/orders/order-products",
+      {
+        method: "POST",
+        body: orderData,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
 
     // حفظ البيانات في localStorage قبل إعادة تعيين الحقول
     if (remember.value) {
       const dataToSave = {
+        name: form.value.name,
         address: form.value.address,
-        phone: form.value.phone
+        phone: form.value.phone,
       };
       localStorage.setItem("loginInfo", JSON.stringify(dataToSave));
     } else {
       localStorage.removeItem("loginInfo");
     }
+
+    // Clear cart items after successful order
+    localStorage.removeItem('products');
 
     // إعادة تعيين الحقول بعد الإرسال
     form.value.address = "";
@@ -220,15 +295,12 @@ async function submitForm() {
     showErrorInput.value = false;
 
     // عرض رسالة نجاح
-    await showToast('تم إرسال الطلب بنجاح');
+    await showToast("تم إرسال الطلب بنجاح");
 
     // التوجيه إلى الصفحة الرئيسية
-    router.push('/');
-
+    router.push("/");
   } catch (error) {
-    console.error("Error submitting order:", error);
-    // عرض رسالة خطأ
-    showToast('فشل إرسال الطلب', 'error');
+    showToast("فشل إرسال الطلب", "error");
   } finally {
     showLoading.value = false;
   }
@@ -236,8 +308,8 @@ async function submitForm() {
 
 async function confirmOrder() {
   const result = await showConfirmMessage(
-    'تأكيد الطلب',
-    'هل أنت متأكد من إتمام الطلب؟'
+    "تأكيد الطلب",
+    "هل أنت متأكد من إتمام الطلب؟"
   );
   if (result.isConfirmed) {
     // ... rest of the code ...

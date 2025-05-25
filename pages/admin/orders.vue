@@ -187,7 +187,7 @@ function updateOrderStatus(order) {
 }
 
 async function saveOrderStatus() {
-  const url = `${authStore.urlAuth}/api/orders/order-status`;
+  const url = `${authStore.urlAuth}api/orders/order-status`;
   showLoading.value = true;
   if (selectedOrder.value) {
     try {

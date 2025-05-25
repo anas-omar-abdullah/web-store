@@ -35,6 +35,7 @@
               class="w-full h-[200px] object-cover rounded"
           /></NuxtLink>
           <h3 class="mt-2 text-lg text-center">{{ product.name }}</h3>
+          <p class="mt-2 text-sm font-bold text-center text-[#3ca2fa]">{{ product.price }} $</p>
         </div>
       </SwiperSlide>
     </Swiper>
