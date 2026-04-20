@@ -56,14 +56,22 @@
 
           <div class="flex flex-col md:flex-row gap-4 mt-6">
             <button
+              @click="addToCart"
+              :disabled="isAddingToCart"
               class="w-full border-var text-white py-3 px-6 rounded-lg text-lg font-semibold transition-colors"
+              :class="{ 'opacity-50 cursor-not-allowed': isAddingToCart }"
             >
-              إضافة إلى السلة
+              <span v-if="!isAddingToCart">إضافة إلى السلة</span>
+              <span v-else>جاري الإضافة...</span>
             </button>
             <button
+              @click="buyNow"
+              :disabled="isBuying"
               class="w-full bg-primary text-white py-3 px-6 rounded-lg text-lg font-semibold bg-hover"
+              :class="{ 'opacity-50 cursor-not-allowed': isBuying }"
             >
-              شراء
+              <span v-if="!isBuying">شراء</span>
+              <span v-else>جاري المعالجة...</span>
             </button>
           </div>
         </div>
@@ -73,23 +81,30 @@
 </template>
 
 <script setup>
-import { useRoute, useAsyncData } from "#imports";
+import { ref } from "vue";
+import { useRoute, useRouter, useAsyncData } from "#imports";
 import { LucideArrowLeft } from "lucide-vue-next";
 import { useAdvertisement } from "~/composables/useAdvertisement";
+import { showToast } from "~/utils/toast";
 
 const { isAdVisible } = useAdvertisement();
+const router = useRouter();
+const route = useRoute();
+const productId = route.params.id;
+
+// Loading states
+const isAddingToCart = ref(false);
+const isBuying = ref(false);
+const config = useRuntimeConfig();
 
 useHead({
   title: "تفاصيل المنتج",
 });
 
-const route = useRoute();
-const productId = route.params.id;
-
 // جلب بيانات المنتج من الـ API
 const { data: product, error } = await useAsyncData("product", () =>
   $fetch(
-    `https://muaazaltahan-001-site1.dtempurl.com/api/products/${productId}`
+    `${config.public.apiBase}api/products/${productId}`
   )
 );
 
@@ -99,6 +114,68 @@ if (error.value || !product.value) {
     statusCode: 404,
     statusMessage: "المنتج غير موجود",
   });
+}
+
+/**
+ * Add product to shopping cart
+ */
+function addToCart() {
+  if (!product.value || isAddingToCart.value) return;
+  
+  isAddingToCart.value = true;
+  
+  try {
+    if (process.client) {
+      const stored = localStorage.getItem("products");
+      let cartProducts = stored ? JSON.parse(stored) : [];
+      
+      const productIndex = cartProducts.findIndex((item) => item.id === product.value.id);
+      
+      if (productIndex !== -1) {
+        // Product already in cart, increment quantity
+        const newCount = cartProducts[productIndex].count + 1;
+        if (newCount <= product.value.quantity) {
+          cartProducts[productIndex].count = newCount;
+        } else {
+          showToast("الكمية المطلوبة غير متوفرة", "error");
+          return;
+        }
+      } else {
+        // Add new product to cart
+        cartProducts.push({
+          ...product.value,
+          count: 1,
+        });
+      }
+      
+      localStorage.setItem("products", JSON.stringify(cartProducts));
+      showToast("تمت إضافة المنتج إلى السلة بنجاح");
+    }
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    showToast("حدث خطأ أثناء إضافة المنتج إلى السلة", "error");
+  } finally {
+    isAddingToCart.value = false;
+  }
+}
+
+/**
+ * Buy product now (redirect to checkout)
+ */
+function buyNow() {
+  if (!product.value || isBuying.value) return;
+  
+  isBuying.value = true;
+  
+  try {
+    // Redirect to buying page with product ID and count
+    router.push(`/buying?id=${product.value.id}&count=1`);
+  } catch (error) {
+    console.error("Error navigating to checkout:", error);
+    showToast("حدث خطأ، الرجاء المحاولة مرة أخرى", "error");
+  } finally {
+    isBuying.value = false;
+  }
 }
 </script>
 

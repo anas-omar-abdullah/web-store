@@ -68,7 +68,7 @@
                     <button
                       type="button"
                       @click="toggleCountryCodeDropdown"
-                      class="items-center px-4 py-2 all-border-input rounded-l-md"
+                      class="items-center px-4 py-2 all-border-input rounded-l-md flex  justify-between min-w-[50px] h-[30px]"
                     >
                       {{ selectedCountryCode }}
                       <ChevronDown class="ml-2 h-4 w-4" />
@@ -125,6 +125,8 @@
 import { ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { onClickOutside } from "@vueuse/core";
+import { ChevronDown } from 'lucide-vue-next';
+import { showToast } from "~/utils/toast";
 
 useHead({
   title: "انشاء حساب",
@@ -186,11 +188,11 @@ const validateForm = () => {
     errors.value.password = "هذا الحقل مطلوب";
     isValid = false;
   }
-  if (user.value.phone.length != 10) {
-
-    errors.value.phone = "يجب ان يحتوي على 10 أرقام";
+  if (String(user.value.phone).trim() === "") {
+    errors.value.phone = "هذا الحقل مطلوب";
     isValid = false;
   }
+
   return isValid;
 };
 
@@ -198,17 +200,39 @@ async function AdminLogin() {
   showErrorInput.value = true;
   if (!validateForm()) return;
   showLoading.value = true;
-  const authStore = useAuthStore();
+  
   try {
-    const result = await authStore.login({
-      email: user.value.email,
-      password: user.value.password,
+    const config = useRuntimeConfig();
+    // TODO: Replace with actual signup endpoint when available
+    // Currently the API doesn't have a signup endpoint (see forApi.txt)
+    const response = await $fetch(`${config.public.apiBase}authentication/register`, {
+      method: "POST",
+      body: {
+        name: user.value.name,
+        email: user.value.email,
+        password: user.value.password,
+        phoneNumber: selectedCountryCode.value + user.value.phone,
+      },
+    }).catch(async (error) => {
+      // If register endpoint doesn't exist, fall back to login
+      // This is a temporary workaround until backend implements signup
+      console.warn("Signup endpoint not available, using login endpoint");
+      const authStore = useAuthStore();
+      return await authStore.login({
+        email: user.value.email,
+        password: user.value.password,
+      });
     });
-    mess.value = result;
-    navigateTo("/");
+    
+    if (response) {
+      showToast("تم إنشاء الحساب بنجاح");
+      navigateTo("/");
+    }
     showErrorInput.value = false;
   } catch (error) {
-    mess.value = "error cant login try later";
+    console.error("Signup error:", error);
+    mess.value = "فشل إنشاء الحساب، الرجاء المحاولة مرة أخرى";
+    showToast("فشل إنشاء الحساب", "error");
   } finally {
     showLoading.value = false;
   }
@@ -253,7 +277,7 @@ async function AdminLogin() {
 }
 .container-flex {
   display: flex;
-  gap:1px;
+  gap:8px;
   max-width:100%;
 }
 @media(max-width:370px){

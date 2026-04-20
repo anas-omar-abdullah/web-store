@@ -8,11 +8,16 @@ import { useAuthStore } from "@/stores/auth";
 import { onBeforeMount } from "vue";
 
 onBeforeMount(() => {
-  const now = new Date().getMilliseconds();
-  const exp = localStorage.getItem("exp");
-  if (exp && exp <= now - 60 * 60 * 1000) {
-    const authStore = useAuthStore();
-    authStore.logout();
+  // Only run on client-side
+  if (process.client) {
+    const now = Date.now(); // Fixed: use getTime() not getMilliseconds()
+    const exp = parseInt(localStorage.getItem("exp") || "0");
+    
+    // Check if token has expired
+    if (exp && now >= exp) {
+      const authStore = useAuthStore();
+      authStore.logout();
+    }
   }
 });
 </script>

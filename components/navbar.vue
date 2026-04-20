@@ -3,226 +3,292 @@
     class="fixed z-[999] left-0 right-0 bg-white shadow-md"
     :class="{ 'top-[44px]': isAdVisible, 'top-0': !isAdVisible }"
   >
-    <div class="content container mx-auto flex items-center justify-between">
-      <!-- logo -->
-      <NuxtLink to="/" class="text-xl font-bold text-primary">
-        <img class="w-40" src="/logo.png" alt="logo" />
-      </NuxtLink>
+    <div class="content container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <!-- logo -->
+        <NuxtLink to="/" class="text-xl font-bold text-primary flex-shrink-0">
+          <img class="w-32 md:w-40" src="/logo.png" alt="logo" />
+        </NuxtLink>
 
-      <!-- حقل البحث في الشاشات الكبيرة -->
-      <div class="hidden md:flex flex-1">
-        <div class="relative w-2/4" ref="searchContainer">
-          <button @click="searchProducts">
-            <LucideSearch class="absolute left-3 top-1/2 -translate-y-1/2" />
-          </button>
-          <input
-            v-model="searchText"
-            type="text"
-            placeholder="بحث عن منتج..."
-            class="input-search w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
-            @input="searchProducts"
-          />
-          <transition name="fade">
-            <div
-              v-if="isSerOpen"
-              class="absolute right-0 mt-2 w-[500px] bg-white border border-gray-200 shadow-xl rounded-xl p-4 z-50"
-            >
-              <div class="flex justify-between items-center mb-4 border-b pb-3">
-                <h3 class="text-lg font-semibold text-gray-800">نتائج البحث</h3>
-                <button
-                  @click="isSerOpen = false"
-                  class="text-gray-500 hover:text-gray-700"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <div class="max-h-[400px] overflow-y-auto custom-scrollbar">
-                <div v-if="isLoading" class="p-6 text-center">
-                  <div
-                    class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto"
-                  ></div>
-                  <p class="mt-3 text-gray-600">جاري البحث عن المنتجات...</p>
-                </div>
-                <div v-else-if="errorMessage" class="p-6 text-center">
-                  <div class="text-red-500 mb-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-12 w-12 mx-auto"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
-                  </div>
-                  <p class="text-red-500 font-medium">{{ errorMessage }}</p>
-                </div>
-                <div v-else-if="results.length === 0" class="p-6 text-center">
-                  <div class="text-gray-400 mb-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-12 w-12 mx-auto"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-                  <p class="text-gray-500 font-medium">لا توجد نتائج للبحث</p>
-                </div>
-                <div v-else class="space-y-3">
-                  <NuxtLink
-                    v-for="product in results"
-                    :key="product.id"
-                    :to="`/product/${product.id}`"
-                    class="flex items-center p-3 hover:bg-gray-50 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200"
+        <!-- حقل البحث في الشاشات الكبيرة -->
+        <div class="hidden lg:flex flex-1 items-center justify-center mx-4">
+          <div class="relative w-2/4" ref="searchContainer">
+            <button @click="searchProducts">
+              <LucideSearch class="absolute left-3 top-1/2 -translate-y-1/2" />
+            </button>
+            <input
+              v-model="searchText"
+              type="text"
+              placeholder="بحث عن منتج..."
+              class="input-search w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+              @input="searchProducts"
+            />
+            <transition name="fade">
+              <div
+                v-if="isSerOpen"
+                class="absolute right-0 mt-2 w-[500px] bg-white border border-gray-200 shadow-xl rounded-xl p-4 z-50"
+              >
+                <div class="flex justify-between items-center mb-4 border-b pb-3">
+                  <h3 class="text-lg font-semibold text-gray-800">نتائج البحث</h3>
+                  <button
                     @click="isSerOpen = false"
+                    class="text-gray-500 hover:text-gray-700"
                   >
-                    <div class="relative w-20 h-20 flex-shrink-0">
-                      <img
-                        :src="product.image"
-                        :alt="product.name"
-                        loading="lazy"
-                        class="w-full h-full object-cover rounded-lg shadow-sm"
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clip-rule="evenodd"
                       />
+                    </svg>
+                  </button>
+                </div>
+                <div class="max-h-[400px] overflow-y-auto custom-scrollbar">
+                  <div v-if="isLoading" class="p-6 text-center">
+                    <div
+                      class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto"
+                    ></div>
+                    <p class="mt-3 text-gray-600">جاري البحث عن المنتجات...</p>
+                  </div>
+                  <div v-else-if="errorMessage" class="p-6 text-center">
+                    <div class="text-red-500 mb-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-12 w-12 mx-auto"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        />
+                      </svg>
                     </div>
-                    <div class="flex-1 mr-4">
-                      <h3 class="font-medium text-gray-900 mb-1">
-                        {{ product.name }}
-                      </h3>
-                      <p class="text-sm text-gray-600 line-clamp-2">
-                        {{ product.description }}
-                      </p>
-                      <p class="text-primary font-semibold mt-2">
-                        {{ product.price }} $
-                      </p>
+                    <p class="text-red-500 font-medium">{{ errorMessage }}</p>
+                  </div>
+                  <div v-else-if="results.length === 0" class="p-6 text-center">
+                    <div class="text-gray-400 mb-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-12 w-12 mx-auto"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
                     </div>
-                  </NuxtLink>
+                    <p class="text-gray-500 font-medium">لا توجد نتائج للبحث</p>
+                  </div>
+                  <div v-else class="space-y-3">
+                    <NuxtLink
+                      v-for="product in results"
+                      :key="product.id"
+                      :to="`/product/${product.id}`"
+                      class="flex items-center p-3 hover:bg-gray-50 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200"
+                      @click="isSerOpen = false"
+                    >
+                      <div class="relative w-20 h-20 flex-shrink-0">
+                        <img
+                          :src="product.image"
+                          :alt="product.name"
+                          loading="lazy"
+                          class="w-full h-full object-cover rounded-lg shadow-sm"
+                        />
+                      </div>
+                      <div class="flex-1 mr-4">
+                        <h3 class="font-medium text-gray-900 mb-1">
+                          {{ product.name }}
+                        </h3>
+                        <p class="text-sm text-gray-600 line-clamp-2">
+                          {{ product.description }}
+                        </p>
+                        <p class="text-primary font-semibold mt-2">
+                          {{ product.price }} $
+                        </p>
+                      </div>
+                    </NuxtLink>
+                  </div>
                 </div>
               </div>
-            </div>
-          </transition>
+            </transition>
+          </div>
         </div>
-        <!-- link for big scareen -->
-        <div class="link-des md:flex flex-1">
+
+        <!-- link for big screen -->
+        <div class="hidden lg:flex items-center space-x-4 space-x-reverse">
           <NuxtLink
             v-for="(item, index) in menuItems"
             :key="index"
             :to="item.link"
-            class="block px-2 py-2 hover:text-primary mr-2"
+            class="block px-2 py-2 hover:text-primary"
             active-class="active-link"
           >
             {{ item.name }}
           </NuxtLink>
         </div>
-      </div>
-      <div class="flex items-center space-x-4">
-        <!-- أيقونة البحث في الشاشات الصغيرة -->
-        <button @click="toggleSearch" class="ml-4 md:hidden">
-          <LucideSearch class="w-6 h-6 text-gray-700" />
-        </button>
 
-        <!-- أيقونة سلة الشراء -->
-        <!-- زر سلة الشراء مع القائمة المنبثقة -->
-        <div ref="cartContainer" class="relative">
-          <button @click="toggleCart" class="relative">
-            <LucideShoppingCart class="w-6 h-6 text-gray-700" />
-            <!-- عرض عدد العناصر في السلة -->
-            <span
-              v-if="cartItems.length"
-              class="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full px-2"
-            >
-              {{ cartItems.length }}
-            </span>
+        <!-- Right side icons -->
+        <div class="flex items-center space-x-4 space-x-reverse">
+          <!-- Search icon for mobile -->
+          <button @click="toggleSearch" class="lg:hidden">
+            <LucideSearch class="w-6 h-6 text-gray-700" />
           </button>
 
-          <!-- قائمة العناصر في السلة -->
-          <transition name="fade">
-            <div
-              v-if="isCartOpen"
-              class="absolute left-full ml-2 mt-2 w-80 bg-white border border-gray-200 shadow-lg rounded-lg p-4 z-10"
-            >
-              <Loading v-if="cartLoading" />
-              <h3 class="text-lg font-semibold mb-2">سلة المشتريات</h3>
-              <div class="see max-h-64 overflow-y-auto">
-                <!-- تكرار العناصر في السلة -->
-                <div
-                  v-for="(item, index) in cartItems"
-                  :key="item.id"
-                  class="flex items-center border-b border-gray-200 py-2"
+          <!-- Account button/icon -->
+          <div v-if="!isLoggedIn" class="hidden md:block">
+            <NuxtLink to="/signup" class="btn btn-primary">
+              إنشاء حساب
+            </NuxtLink>
+          </div>
+          <div v-else ref="accountMenuRef" class="relative">
+            <button @click="isAccountMenuOpen = !isAccountMenuOpen" class="relative">
+              <LucideUser class="w-6 h-6 text-gray-700" />
+            </button>
+            <transition name="fade">
+              <div
+                v-if="isAccountMenuOpen"
+                class="absolute left-full ml-2 mt-2 w-48 bg-white border border-gray-200 shadow-lg rounded-lg p-2 z-10"
+              >
+                <div class="px-4 py-2 border-b border-gray-200">
+                  <p class="font-medium text-gray-900">{{ currentUser?.name }}</p>
+                  <p class="text-sm text-gray-500">{{ currentUser?.email }}</p>
+                </div>
+                <NuxtLink
+                  to="/profile"
+                  class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                  @click="isAccountMenuOpen = false"
                 >
-                  <!-- صورة المنتج (اختياري) -->
-                  <img
-                    v-if="item.imageUrl"
-                    :src="item.imageUrl"
-                    alt="صورة المنتج"
-                    class="w-12 h-12 object-cover rounded mr-3"
-                  />
-                  <div class="flex-1">
-                    <p class="font-semibold">{{ item.name }}</p>
-                    <p class="text-sm text-gray-400">
-                      الكمية: {{ item.quantity }}
-                    </p>
-                  </div>
-                  <div class="px-2 text-sm font-semibold">
-                    {{ item.price }} $
+                  <LucideSettings class="w-5 h-5 ml-2" />
+                  تعديل معلومات الحساب
+                </NuxtLink>
+                <NuxtLink
+                  to="/orders"
+                  class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                  @click="isAccountMenuOpen = false"
+                >
+                  <LucidePackage class="w-5 h-5 ml-2" />
+                  متابعة الطلبات
+                </NuxtLink>
+                <button
+                  @click="handleLogout"
+                  class="flex items-center w-full px-4 py-2 text-red-600 hover:bg-red-50 rounded-md"
+                >
+                  <LucideLogOut class="w-5 h-5 ml-2" />
+                  تسجيل الخروج
+                </button>
+              </div>
+            </transition>
+          </div>
+
+          <!-- Cart icon -->
+          <div ref="cartContainer" class="relative">
+            <button @click="toggleCart" class="relative">
+              <LucideShoppingCart class="w-6 h-6 text-gray-700" />
+              <span
+                v-if="cartItems.length"
+                class="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full px-2"
+              >
+                {{ cartItems.length }}
+              </span>
+            </button>
+            <!-- قائمة العناصر في السلة -->
+            <transition name="fade">
+              <div
+                v-if="isCartOpen"
+                class="absolute left-full ml-2 mt-2 w-80 bg-white border border-gray-200 shadow-lg rounded-lg p-4 z-10"
+              >
+                <Loading v-if="cartLoading" />
+                <h3 class="text-lg font-semibold mb-2">سلة المشتريات</h3>
+                <div class="see max-h-64 overflow-y-auto">
+                  <!-- تكرار العناصر في السلة -->
+                  <div
+                    v-for="(item, index) in cartItems"
+                    :key="item.id"
+                    class="flex items-center border-b border-gray-200 py-2"
+                  >
+                    <!-- صورة المنتج (اختياري) -->
+                    <img
+                      v-if="item.imageUrl"
+                      :src="item.imageUrl"
+                      alt="صورة المنتج"
+                      class="w-12 h-12 object-cover rounded mr-3"
+                    />
+                    <div class="flex-1">
+                      <p class="font-semibold">{{ item.name }}</p>
+                      <p class="text-sm text-gray-400">
+                        الكمية: {{ item.quantity }}
+                      </p>
+                    </div>
+                    <div class="px-2 text-sm font-semibold">
+                      {{ item.price }} $
+                    </div>
                   </div>
                 </div>
+                <!-- زر الانتقال للدفع -->
+                <div class="mt-4">
+                  <NuxtLink
+                    to="/menu"
+                    class="block text-center border-var py-2 rounded-md transition-colors"
+                  >
+                    الانتقال للسلة
+                  </NuxtLink>
+                </div>
+                <div class="mt-4">
+                  <NuxtLink
+                    to="/buying"
+                    class="block text-center bg-color text-white py-2 rounded-md pay"
+                  >
+                    الانتقال للشراء
+                  </NuxtLink>
+                </div>
               </div>
-              <!-- زر الانتقال للدفع -->
-              <div class="mt-4">
-                <NuxtLink
-                  to="/menu"
-                  class="block text-center border-var py-2 rounded-md transition-colors"
-                >
-                  الانتقال للسلة
-                </NuxtLink>
-              </div>
-              <div class="mt-4">
-                <NuxtLink
-                  to="/buying"
-                  class="block text-center bg-color text-white py-2 rounded-md pay"
-                >
-                  الانتقال للشراء
-                </NuxtLink>
-              </div>
-            </div>
-          </transition>
-        </div>
+            </transition>
+          </div>
 
-        <!-- زر القائمة للجوال -->
-        <button @click="toggleMenu" class="md:hidden">
-          <LucideMenu class="w-6 h-6 text-gray-700" />
-        </button>
+          <!-- Menu button for mobile -->
+          <button @click="toggleMenu" class="lg:hidden">
+            <LucideMenu class="w-6 h-6 text-gray-700" />
+          </button>
+        </div>
       </div>
     </div>
+
+    <!-- Mobile menu -->
+    <div
+      v-if="isMenuOpen"
+      ref="popupRef"
+      class="lg:hidden bg-gray-100"
+    >
+      <NuxtLink
+        v-for="(item, index) in menuItems"
+        :key="index"
+        :to="item.link"
+        class="block px-4 py-2 text-gray-700 hover:bg-gray-200"
+        active-class="active-link"
+      >
+        {{ item.name }}
+      </NuxtLink>
+    </div>
+
     <!-- حقل البحث للجوال -->
     <transition name="slide">
       <div
         v-if="isSearchOpen"
-        class="fixed inset-0 bg-white z-[1000] md:hidden"
+        class="fixed inset-0 bg-white z-[1000] lg:hidden"
       >
         <div class="p-4 border-b">
           <div class="flex items-center justify-between mb-4">
@@ -343,35 +409,20 @@
         </div>
       </div>
     </transition>
-
-    <!-- قائمة الصفحات للجوال -->
-    <div
-      v-if="isMenuOpen"
-      ref="popupRef"
-      class="nav-link md:hidden bg-gray-100"
-    >
-      <NuxtLink
-        v-for="(item, index) in menuItems"
-        :key="index"
-        :to="item.link"
-        class="block px-4 py-2 text-gray-700 hover:bg-gray-200"
-        active-class="active-link"
-      >
-        {{ item.name }}
-      </NuxtLink>
-    </div>
   </nav>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
-import { LucideSearch, LucideShoppingCart, LucideMenu } from "lucide-vue-next";
+import { ref, onMounted, onUnmounted, nextTick, computed, watch } from "vue";
+import { LucideSearch, LucideShoppingCart, LucideMenu, LucideUser, LucideLogOut, LucidePackage, LucideSettings } from "lucide-vue-next";
 import { onClickOutside } from "@vueuse/core";
 import { useRouter } from "vue-router";
 import { useAdvertisement } from "~/composables/useAdvertisement";
+import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const { isAdVisible } = useAdvertisement();
+const authStore = useAuthStore();
 
 const isMenuOpen = ref(false);
 const isSearchOpen = ref(false);
@@ -561,6 +612,38 @@ const closeSearch = () => {
 
 // إضافة مرجع لحقل البحث
 const searchInput = ref(null);
+
+// إضافة متغيرات جديدة للتحكم في قائمة الحساب
+const isAccountMenuOpen = ref(false);
+const accountMenuRef = ref(null);
+
+// دالة للتحقق من حالة تسجيل دخول المستخدم
+const isLoggedIn = computed(() => {
+  const user = localStorage.getItem("_user");
+  return !!user;
+});
+
+// دالة للحصول على معلومات المستخدم
+const currentUser = computed(() => {
+  const user = localStorage.getItem("_user");
+  return user ? JSON.parse(user) : null;
+});
+
+// دالة لتسجيل الخروج
+const handleLogout = async () => {
+  try {
+    await authStore.logout();
+    isAccountMenuOpen.value = false;
+    router.push('/login');
+  } catch (error) {
+    console.error('Error logging out:', error);
+  }
+};
+
+// إغلاق قائمة الحساب عند النقر خارجها
+onClickOutside(accountMenuRef, () => {
+  isAccountMenuOpen.value = false;
+});
 </script>
 
 <style scoped>
@@ -707,9 +790,94 @@ const searchInput = ref(null);
   opacity: 1;
 }
 
+.input-search:not(:focus) {
+  border-color: black;
+}
+
+/* تحسينات للشاشات الصغيرة */
 @media (max-width: 768px) {
   .custom-scrollbar {
     max-height: calc(100vh - 200px);
+  }
+  
+  .search-sm {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* تحسينات للقائمة المنسدلة */
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* تحسينات للنصوص */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* تحسينات للتجاوب */
+@media (max-width: 1024px) {
+  .content {
+    @apply px-4;
+  }
+  
+  .btn {
+    @apply px-3 py-1.5 text-sm;
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    @apply px-2;
+  }
+  
+  .btn {
+    @apply px-2 py-1 text-xs;
+  }
+}
+
+/* تحسين المسافات بين العناصر */
+.space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+  margin-right: calc(1rem * var(--tw-space-x-reverse));
+  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
+/* تحسين ارتفاع الشريط */
+.h-16 {
+  height: 4rem;
+}
+
+/* تحسين حجم الشعار */
+@media (max-width: 768px) {
+  .w-32 {
+    width: 8rem;
+  }
+}
+
+/* تنسيقات الأزرار */
+.btn {
+  @apply px-4 py-2 rounded-md transition-colors duration-200;
+}
+
+.btn-primary {
+  @apply bg-primary text-white hover:bg-primary/90;
+}
+
+@media (max-width: 768px) {
+  .btn {
+    @apply px-3 py-1.5 text-sm;
   }
 }
 </style>

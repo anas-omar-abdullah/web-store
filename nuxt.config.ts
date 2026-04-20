@@ -2,8 +2,15 @@
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   ssr: false,
-  devtools: { enabled: false },
+  devtools: { enabled: true },
   modules: ["@nuxtjs/tailwindcss"],
+  
+  // Runtime configuration for environment variables
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || "https://muaazaltahan-001-site1.dtempurl.com/",
+    },
+  },
   postcss: {
     plugins: {
       tailwindcss: {},

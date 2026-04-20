@@ -2,5 +2,12 @@ for api
 problem with add admin
 problem with change status order and when reload back to old
 
+add api for => signup user 
+            => edit profile user
+            => show order to user
+            => 
+
+            in futur => page for information sell
+
 for me 
 i have prob;em with token with finish time i stay login but i dont can call with api 
